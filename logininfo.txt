@@ -1,11 +1,12 @@
 admin,1
 A,password
-B,2
-C,1
 D,2
 E,1
 F,1
 G,1
 H,1
 I,1
+BC,1
+B,7
 W
+X

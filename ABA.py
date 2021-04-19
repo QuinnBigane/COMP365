@@ -44,9 +44,6 @@ class Address_Book:
             command = input("ABA >")
             self.command_line_interpreter(command)
 
-    
-    
-
     def command_line_interpreter(self, command):
         """
         Interprets user input and decides what to do based on that
@@ -90,7 +87,6 @@ class Address_Book:
         else:
             print("Unrecognized command")
     
-
     def exit(self):
         """
         Exits ABA
@@ -255,9 +251,6 @@ class Address_Book:
 
         print("OK")
 
-
-    
-
     #TODO:
     def import_database(self):
         """
@@ -311,20 +304,73 @@ class Address_Book:
         """   
         print("display audit log called")   
     
-    #TODO:
     def delete_user(self):
         """
         Deletes a user from the Address Book
         """  
-        print("delete user called")   
-    
+        #TODO: dont let admin delete himself?
+
+        username = self.tokens[1]
+        infile = open("logininfo.txt", "r")
+        
+        #if there is currently an active login
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        #if the admin is not logged in
+        if self.current_user != "admin":
+            print("Admin not active")
+            return
+        #if the admin is logged in
+        lines = infile.readlines()
+        for i in range(len(lines)):
+            toks = lines[i].split(",")
+            #if a matching username is found
+            if toks[0].rstrip() == username:
+                #delete it
+                lines[i] = ""
+                infile = open("logininfo.txt", "w")
+                infile.writelines(lines)
+                infile.close()
+                print("Ok")
+                return
+        infile.close()
+        print("Invalid userID")
 
     #TODO:    
     def add_user(self):
         """
         Adds a new user to the Address Book
         """   
-        print("add user called")
+        #TODO: dont let admin add more admins
+
+        username = self.tokens[1]
+        infile = open("logininfo.txt", "r")
+        
+        #if there is currently an active login
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        #if the admin is not logged in
+        if self.current_user != "admin":
+            print("Admin not active")
+            return
+        #if the admin is logged in
+        lines = infile.readlines()
+        for i in range(len(lines)):
+            toks = lines[i].split(",")
+            #if a matching username is found
+            if toks[0].rstrip() == username:
+                #do not add it
+                infile.close()
+                print("Account already exists")
+                return
+        #if account does not exist
+        infile = open("logininfo.txt", "a")
+        infile.write(username + "\n")
+        infile.close()
+        print("Ok")
+       
 
 
 
