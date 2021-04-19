@@ -4,7 +4,7 @@ Date: 4/18/2021
 Author: Quinn Bigane, Tom Padova, Bo Kulbacki
 Description: This is a secure implementation of an Address Book database 
 """
- 
+import datetime
 import re
 
 class Address_record:
@@ -29,9 +29,7 @@ class Address_Book:
         self.login_state = login_state
         
         self.driver()
-        
     
- 
     def driver(self):
             
         """
@@ -51,8 +49,7 @@ class Address_Book:
         #parse command entered on spaces
         self.tokens = None
         self.tokens = command.split(" ")
-        #TODO: Add command entered to audit log
-        
+
         #based on commanded entered, decide next step
         if self.tokens[0] == "HLP": #help
             self.display_help()
@@ -98,9 +95,6 @@ class Address_Book:
         Verifies user login credentials based on a database of login info
         """  
         #TODO: Add error handling if user does not enter a username with LIN
-
-
-
         username = self.tokens[1]
         infile = open("logininfo.txt", "r")
 
@@ -150,7 +144,6 @@ class Address_Book:
             infile.close()
             print("Invalid credentials")    
 
-  
     def logout(self):
         """
         Logs out current user
@@ -162,7 +155,6 @@ class Address_Book:
             self.login_state = 0
             self.current_user = None
             print("OK")
-
  
     #TODO:
     def change_password(self):
@@ -171,8 +163,6 @@ class Address_Book:
         """ 
         print("Change password called")      
     
-
-    #TODO:
     def list_users(self):
         """
         Display Users
@@ -194,7 +184,6 @@ class Address_Book:
             print(toks[0].rstrip())
         infile.close()
         print("Ok")
-
 
     def display_help(self):
         """
@@ -281,7 +270,6 @@ class Address_Book:
         """ 
         print("export database called")    
     
-
     #TODO:
     def add_record(self):
         """
@@ -289,7 +277,6 @@ class Address_Book:
         """ 
         print("addd record called")    
     
-
     #TODO:
     def delete_record(self):
         """
@@ -297,7 +284,6 @@ class Address_Book:
         """ 
         print("delete record called")    
     
-
     #TODO:
     def edit_record(self):
         """
@@ -305,7 +291,6 @@ class Address_Book:
         """  
         print("edit record called")    
     
-
     #TODO:
     def get_record(self):
         """
@@ -385,7 +370,10 @@ class Address_Book:
         infile.write(username + "\n")
         infile.close()
         print("Ok")
-       
+
+    #TODO: call this meathod to add something to the audit log with type (passed)
+    def add_to_audit_log(self, audit_type):
+        pass      
 
 
 
