@@ -283,7 +283,12 @@ class Address_Book:
         """
         Adds a new record for user
         """ 
-        
+        #if there is currently an active login
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        else 
+            
 
     
     #TODO:
