@@ -4,7 +4,7 @@ Date: 4/18/2021
 Author: Quinn Bigane, Tom Padova, Bo Kulbacki
 Description: This is a secure implementation of an Address Book database 
 """
-import datetime
+import datetime 
 import re
 
 class Address_record:
@@ -119,6 +119,7 @@ class Address_Book:
                         if new_password != pw_confirmation:
                             print("Passwords do not match")
                             infile.close()
+                            self.add_to_audit_log("LF")
                             return
                         else:
                             lines[i] = lines[i].rstrip() + "," + new_password + "\n"
@@ -129,6 +130,8 @@ class Address_Book:
                             self.current_user = toks[0]
                             self.login_state = 1
                             infile.close()
+                            self.add_to_audit_log("L1")
+                            self.add_to_audit_log("LS")
                             return
                     #username has a password
                     else:
@@ -140,9 +143,11 @@ class Address_Book:
                             self.login_state = 1
                             print("OK")
                             infile.close()
+                            self.add_to_audit_log("LS")
                             return
             infile.close()
-            print("Invalid credentials")    
+            print("Invalid credentials")
+            self.add_to_audit_log("LF")    
 
     def logout(self):
         """
@@ -153,6 +158,7 @@ class Address_Book:
 
         else:
             self.login_state = 0
+            self.add_to_audit_log("LO")
             self.current_user = None
             print("OK")
  
@@ -161,6 +167,8 @@ class Address_Book:
         """
         Logs out current user
         """ 
+        self.add_to_audit_log("FPC") #if failed password change
+        self.add_to_audit_log("SPC") #if successful password change
         print("Change password called")      
     
     def list_users(self):
@@ -334,9 +342,11 @@ class Address_Book:
                 infile.writelines(lines)
                 infile.close()
                 print("Ok")
+                self.add_to_audit_log("DU")
                 return
         infile.close()
         print("Invalid userID")
+
 
     def add_user(self):
         """
@@ -369,12 +379,16 @@ class Address_Book:
         infile = open("logininfo.txt", "a")
         infile.write(username + "\n")
         infile.close()
+        self.add_to_audit_log("AU")
         print("Ok")
 
-    #TODO: call this meathod to add something to the audit log with type (passed)
     def add_to_audit_log(self, audit_type):
-        pass      
-
+        auditlog = open("audit_log.csv", "a")
+        e = datetime.datetime.now()
+        auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
+            str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
+            audit_type + "," + str(self.current_user) + "\n")      
+        auditlog.close()
 
 
 if __name__ == "__main__":
