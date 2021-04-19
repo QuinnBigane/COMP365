@@ -283,7 +283,8 @@ class Address_Book:
         """
         Adds a new record for user
         """ 
-        print("addd record called")    
+        
+
     
     #TODO:
     def delete_record(self):
@@ -306,12 +307,22 @@ class Address_Book:
         """
         print("get record called")    
     
-    #TODO:
     def display_audit_log(self):
         """
         Displays the audit log 
         """   
-        print("display audit log called")   
+        #if there is currently an active login
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        #if the admin is not logged in
+        if self.current_user != "admin":
+            print("Admin not active")
+            return
+        #if the admin is logged in
+        auditlog = open("audit_log.csv", "r")
+        for line in auditlog:
+            print(line.rstrip())  
     
     def delete_user(self):
         """
