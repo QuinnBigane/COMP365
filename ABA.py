@@ -177,7 +177,23 @@ class Address_Book:
         """
         Display Users
         """          
-        print("list users called")
+        #if there is currently an active login
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        #if the admin is not logged in
+        if self.current_user != "admin":
+            print("Admin not active")
+            return
+        #if the admin is logged in
+        infile = open("logininfo.txt", "r")
+        lines = infile.readlines()
+        for i in range(len(lines)):
+            toks = lines[i].split(",")
+            #if a matching username is found
+            print(toks[0].rstrip())
+        infile.close()
+        print("Ok")
 
 
     def display_help(self):
@@ -311,7 +327,6 @@ class Address_Book:
         #TODO: dont let admin delete himself?
 
         username = self.tokens[1]
-        infile = open("logininfo.txt", "r")
         
         #if there is currently an active login
         if self.login_state == 0: 
@@ -322,6 +337,7 @@ class Address_Book:
             print("Admin not active")
             return
         #if the admin is logged in
+        infile = open("logininfo.txt", "r")
         lines = infile.readlines()
         for i in range(len(lines)):
             toks = lines[i].split(",")
@@ -337,7 +353,6 @@ class Address_Book:
         infile.close()
         print("Invalid userID")
 
-    #TODO:    
     def add_user(self):
         """
         Adds a new user to the Address Book
@@ -345,7 +360,6 @@ class Address_Book:
         #TODO: dont let admin add more admins
 
         username = self.tokens[1]
-        infile = open("logininfo.txt", "r")
         
         #if there is currently an active login
         if self.login_state == 0: 
@@ -356,6 +370,7 @@ class Address_Book:
             print("Admin not active")
             return
         #if the admin is logged in
+        infile = open("logininfo.txt", "r")
         lines = infile.readlines()
         for i in range(len(lines)):
             toks = lines[i].split(",")
