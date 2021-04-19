@@ -24,19 +24,19 @@ class Address_record:
         
 class Address_Book:
     def __init__(self, login_state = 0,current_user = None):
+        #0 = not logged in
+        #1 = logged in
         self.login_state = login_state
         
         self.driver()
         
     
-    
-    """
-    Main looping module of the function, waits for user input
-    """   
+ 
     def driver(self):
-        #possible vars: active_login (1=yes, 2=no)
-        #loop to wait for user input
-
+            
+        """
+        Main looping module of the function, waits for user input
+        """  
         print("Address Book Application, version 1.0. Type “HLP” for a list of commands") #print this when the program first starts
          
         while(1):
@@ -46,10 +46,11 @@ class Address_Book:
 
     
     
-    """
-    Interprets user input and decides what to do based on that
-    """   
+
     def command_line_interpreter(self, command):
+        """
+        Interprets user input and decides what to do based on that
+        """   
         #parse command entered on spaces
         self.tokens = None
         self.tokens = command.split(" ")
@@ -89,15 +90,17 @@ class Address_Book:
         else:
             print("Unrecognized command")
     
-    """
-    Exits ABA
-    """
+
     def exit(self):
+        """
+        Exits ABA
+        """    
         exit()
-    """
-    Verifies user login credentials based on a database of login info
-    """  
+
     def login(self):
+        """
+        Verifies user login credentials based on a database of login info
+        """  
         #TODO: Add error handling if user does not enter a username with LIN
 
 
@@ -151,13 +154,11 @@ class Address_Book:
             infile.close()
             print("Invalid credentials")    
 
-
-
-
-    """
-    Logs out current user
-    """  
+  
     def logout(self):
+        """
+        Logs out current user
+        """
         if self.login_state == 0: #no active login session
             print("No active login session")
 
@@ -166,24 +167,27 @@ class Address_Book:
             self.current_user = None
             print("OK")
 
-    """
-    Logs out current user
-    """  
+ 
+    #TODO:
     def change_password(self):
-        #TODO:
+        """
+        Logs out current user
+        """ 
         print("Change password called")      
     
-    """
-    Display Users
-    """  
+
+    #TODO:
     def list_users(self):
-        #TODO:
+        """
+        Display Users
+        """          
         print("list users called")
 
-    """
-    Displays the help commands
-    """    
+
     def display_help(self):
+        """
+        Displays the help commands
+        """    
         if len(self.tokens) == 2:
             if self.tokens[1] == "HLP": #help
                 print("HLP [<command name>]")
@@ -253,67 +257,73 @@ class Address_Book:
 
 
     
-    """
-    Imports a database
-    """
+
+    #TODO:
     def import_database(self):
-        #TODO:
+        """
+        Imports a database
+        """
         print("import database called")    
-    
-    """
-    Exports current user database 
-    """ 
+
+    #TODO:
     def export_database(self):
-        #TODO:
+        """
+        Exports current user database 
+        """ 
         print("export database called")    
     
-    """
-    Adds a new record for user
-    """ 
+
+    #TODO:
     def add_record(self):
-        #TODO:
+        """
+        Adds a new record for user
+        """ 
         print("addd record called")    
     
-    """
-    Deletes a record from the database
-    """ 
+
+    #TODO:
     def delete_record(self):
-        #TODO:
+        """
+        Deletes a record from the database
+        """ 
         print("delete record called")    
     
-    """
-    Edits a record from the database
-    """  
+
+    #TODO:
     def edit_record(self):
-        #TODO:
+        """
+        Edits a record from the database
+        """  
         print("edit record called")    
     
-    """
-    Gets a record from the database 
-    """    
+
+    #TODO:
     def get_record(self):
-        #TODO:
+        """
+        Gets a record from the database 
+        """
         print("get record called")    
     
-    """
-    Displays the audit log 
-    """     
+    #TODO:
     def display_audit_log(self):
-        #TODO:
+        """
+        Displays the audit log 
+        """   
         print("display audit log called")   
     
-    """
-    Deletes a user from the Address Book
-    """  
+    #TODO:
     def delete_user(self):
-        #TODO:
+        """
+        Deletes a user from the Address Book
+        """  
         print("delete user called")   
     
-    """
-    Adds a new user to the Address Book
-    """       
+
+    #TODO:    
     def add_user(self):
-        #TODO:
+        """
+        Adds a new user to the Address Book
+        """   
         print("add user called")
 
 
