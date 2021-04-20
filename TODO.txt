@@ -1,0 +1,25 @@
+
+Import database needs to be implemented
+
+Export database needs to be implemented
+
+Add record needs to be implemented
+
+delete record needs be implemented
+
+Edit record needs to be implemented
+
+Get record needs to be implemented
+
+
+SECURITY IMPLEMENTATIONS (NOT a priority yet)
+Login module needs to handle error if user does not enter username with LIN
+
+Login module needs to check that password chosen is valid (meets requirements)
+    change password module needs to use this same code to check when new password is chosen
+
+Delete user module needs to prevent admin from deleting himself
+
+Add user module needs to prevent admin from adding another admin
+
+Audit log needs to be implemented as a ciruclar queue

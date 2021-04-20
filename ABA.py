@@ -162,14 +162,45 @@ class Address_Book:
             self.current_user = None
             print("OK")
  
-    #TODO:
     def change_password(self):
         """
         Logs out current user
         """ 
-        self.add_to_audit_log("FPC") #if failed password change
-        self.add_to_audit_log("SPC") #if successful password change
-        print("Change password called")      
+        if self.login_state == 0: #no active login session
+            print("No active login session")
+            self.add_to_audit_log("FPC") #if failed password change
+            return 
+
+        infile = open("logininfo.txt", "r")
+        lines = infile.readlines()
+        for i in range(len(lines)):
+                toks = lines[i].split(",")
+                #matching username found
+                if toks[0].rstrip() == self.current_user:
+                    if toks[1].rstrip() == self.tokens[1]:
+                        new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
+                        pw_confirmation = input("Reenter the same password: ")
+                        #TODO: add error handling if user does not meet password specifications
+                        if new_password != pw_confirmation:
+                            print("Passwords do not match")
+                            infile.close()
+                            self.add_to_audit_log("FPC")
+                            return
+                        else:
+                            lines[i] = toks[0].rstrip() + "," + new_password + "\n"
+                            infile = open("logininfo.txt", "w")
+                            infile.writelines(lines)
+                            infile.close()
+                            print("OK")
+                            self.current_user = toks[0]
+                            self.login_state = 1
+                            infile.close()
+                            self.add_to_audit_log("SPC")
+                            return
+                    else: 
+                        print("Invalid credentials")
+                        self.add_to_audit_log("FPC")
+                        return
     
     def list_users(self):
         """
@@ -269,8 +300,62 @@ class Address_Book:
         """
         Imports a database
         """
-        print("import database called")    
+        if self.login_state == 0: #no active login
+            print("No active login session")
+            return
+        if self.current_user == "admin": #admin user currently logged in
+            print("Admin not authorized")
+            return
+        if len(self.tokens) < 2: #no input file specified
+            print("No Input_file specified")
+            return
+        
+        try:
+            infile = open(self.tokens[1], "r")
+        except OSError: #if file cannot be opened
+            print("Can’t open Input_file")
 
+        #check file format
+        for line in infile:
+            num_semicolons = 0
+            for char in line:
+                if char == ";":
+                    num_semicolons += 1
+            
+            #might be a better way to validate the file is in the correct format
+            if num_semicolons != 12:
+                print("Input_file invalid format")
+                return
+            
+            toks = line.split(";")
+            recordID = toks[0]
+            SN = toks[1]
+            GN = toks[2]
+            PEM = toks[3]
+            WEM = toks[4]
+            PPH = toks[5]
+            WPH = toks[6]
+            SA = toks[7]
+            CITY = toks[8]
+            STP = toks[9]
+            CTY = toks[10]
+            PC = toks[11]
+
+            if self.check_recordID(recordID) == 1:
+                print("Duplicate recordID")
+                return
+            
+            256
+
+    #TODO:
+    def check_recordID(self, recordID):
+    """
+    Checks a user's database for recordID and returns 0 if the recordID 
+    is not in the user’s database and 1 if it already exists
+    """
+        pass
+   
+    
     #TODO:
     def export_database(self):
         """
@@ -287,10 +372,47 @@ class Address_Book:
         if self.login_state == 0: 
             print("No active login session")
             return
-        else 
-            
+        if self.current_user == "admin":
+            print("Admin active")
+            return
 
-    
+        if (check_recordID(self.tokens[1]) == 0)
+            {
+                for entry in self.tokens[2:]:#searches tokens 2 to end 
+                    command = string[0:entry.index(=)] #the command which will be entered
+                    if (command == "SN")
+
+                    elif(command == "GN")
+
+                    elif(command =="PEM")
+                        
+                    elif (command =="WEM")
+                        
+                    elif(command=="PPH")
+
+                    elif(command=="WPH")
+                    
+                    elif (command=="SA")
+                    
+                    elif (command=="CITY")
+                    
+                    elif (command=="STP")
+
+                    elif (command =="CTY")
+                    
+                    elif (command =="PC")
+                    
+                    else
+                        print("Invalid entry. Please try to add record again.")
+            }
+        else: 
+            print("The given recordID " + self.tokens[1] +"")
+                
+
+# this mod needs to check the 5 credintials things liek admin not logged in,etc, if all met, it
+#  adds based on self.tokens[1] == first thing they passed, self.tokens[2]......
+
+
     #TODO:
     def delete_record(self):
         """
@@ -363,7 +485,6 @@ class Address_Book:
         infile.close()
         print("Invalid userID")
 
-
     def add_user(self):
         """
         Adds a new user to the Address Book
@@ -399,6 +520,7 @@ class Address_Book:
         print("Ok")
 
     def add_to_audit_log(self, audit_type):
+        #TODO: implement circualr aspect of audit log
         auditlog = open("audit_log.csv", "a")
         e = datetime.datetime.now()
         auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
@@ -406,6 +528,7 @@ class Address_Book:
             audit_type + "," + str(self.current_user) + "\n")      
         auditlog.close()
 
+        
 
 if __name__ == "__main__":
     Address_Book()
