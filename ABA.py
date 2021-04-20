@@ -39,7 +39,7 @@ class Address_Book:
          
         while(1):
             #prompt user to enter a command
-            command = input("ABA >")
+            command = input("ABA > ")
             self.command_line_interpreter(command)
 
     def command_line_interpreter(self, command):
@@ -61,20 +61,26 @@ class Address_Book:
             self.change_password()
         elif self.tokens[0] == "ADU": #add user
             self.add_user()
+            pass
         elif self.tokens[0] == "DEU": #delete user
             self.delete_user()
+            pass
         elif self.tokens[0] == "LSU": #list users
             self.list_users()
         elif self.tokens[0] == "DAL": #display audit log
             self.display_audit_log()
+            pass
         elif self.tokens[0] == "ADR": #add record
             self.add_record()
         elif self.tokens[0] == "DER": #delete record
             self.delete_record()
+            pass
         elif self.tokens[0] == "EDR": #edit record
             self.edit_record()
+            pass
         elif self.tokens[0] == "GER": #get record
             self.get_record()
+            pass
         elif self.tokens[0] == "IMD": #import database
             self.import_database()
         elif self.tokens[0] == "EXD": #export database
@@ -295,11 +301,11 @@ class Address_Book:
 
         print("OK")
 
-    #TODO:
     def import_database(self):
         """
         Imports a database
         """
+        #TODO: check formatting of records being input
         if self.login_state == 0: #no active login
             print("No active login session")
             return
@@ -314,7 +320,8 @@ class Address_Book:
             infile = open(self.tokens[1], "r")
         except OSError: #if file cannot be opened
             print("Can’t open Input_file")
-
+            return
+            
         #check file format
         for line in infile:
             num_semicolons = 0
@@ -323,51 +330,191 @@ class Address_Book:
                     num_semicolons += 1
             
             #might be a better way to validate the file is in the correct format
-            if num_semicolons != 12:
+            if num_semicolons != 11:
+                print(num_semicolons)
                 print("Input_file invalid format")
                 return
             
             toks = line.split(";")
             recordID = toks[0]
-            SN = toks[1]
-            GN = toks[2]
-            PEM = toks[3]
-            WEM = toks[4]
-            PPH = toks[5]
-            WPH = toks[6]
-            SA = toks[7]
-            CITY = toks[8]
-            STP = toks[9]
-            CTY = toks[10]
-            PC = toks[11]
 
             if self.check_recordID(recordID) == 1:
                 print("Duplicate recordID")
                 return
-            
-            256
 
-    #TODO:
+        infile.close()
+        infile = open(self.tokens[1], "r")
+
+        #count number of records that are attempting to be inputted
+        new_records = 0
+        for line in infile:
+            new_records += 1    
+        
+        #count the # of records in the user's database already and store in num_records_in_db (maybe a self. variable?)
+        num_records_in_db = self.count_records()
+        if num_records_in_db + new_records > 256:
+           print("Number of records exceeds maximum")
+           return
+
+        infile.close()
+        infile = open(self.tokens[1], "r")
+
+        #add each record to the user's database
+        for line in infile:
+            line.rstrip()
+            self.tokens = line.split(";")
+            self.add_record_from_import()   
+
+        infile.close()
+        return
+        
+    def count_records(self):
+        """
+        Returns the number of records stored in a user's database.
+        """
+
+        try:
+            infile = open((self.current_user + ".txt"), "r")
+
+            num_records = 0
+            for line in infile:
+                num_records += 1
+
+            infile.close()
+            return num_records
+        except OSError: #if file cannot be opened
+            return 0
+
     def check_recordID(self, recordID):
-    """
-    Checks a user's database for recordID and returns 0 if the recordID 
-    is not in the user’s database and 1 if it already exists
-    """
-        pass
-   
-    
-    #TODO:
+        """
+        Checks a user's database for recordID and returns 0 if the recordID 
+        is not in the user’s database and 1 if it already exists
+        """
+        #loop through all lines of user text file and checks to see if recordID is 
+        # the same as any of the ones in the text file 
+        try:
+            f = open((self.current_user + ".txt"), "r")
+            for line in f:
+                tokens = line.split(";")
+                if (recordID == tokens[0]):
+                    f.close() 
+                    return 1
+            return 0        
+        except OSError: #if file cannot be opened
+            return 0
+
     def export_database(self):
         """
         Exports current user database 
         """ 
-        print("export database called")    
-    
-    #TODO:
+        if self.login_state == 0: #no active login
+            print("No active login session")
+            return
+        if self.current_user == "admin": #admin user currently logged in
+            print("Admin not authorized")
+            return
+        if len(self.tokens) < 2: #no input file specified
+            print("No Output_file specified")
+            return
+        
+        try:
+            outfile = open(self.tokens[1], "a")
+        except OSError: #if file cannot be opened
+            print("Can’t open Output_file")
+            return
+        
+        infile = open((self.current_user + ".txt"), 'r')
+        
+        try:
+            for line in infile:
+                outfile.write(line)
+        except Exception: #error writing to file
+            print("Error writing Output_file")
+        
+        outfile.close()
+        
+        print("OK")
+        return       
+
     def add_record(self):
         """
         Adds a new record for user
         """ 
+        #TODO: check formatting of records being input
+        #if there is currently an active login
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        if self.current_user == "admin":
+            print("Admin not authorized")
+            return
+
+        if (self.check_recordID(self.tokens[1]) == 0):
+                for entry in self.tokens[1:]:
+                    if (len(entry) > 64):
+                        print("One or more invalid record data fields")
+                        return
+                if (self.count_records() > 255):
+                    print("Number of records exceeds maximum") 
+                    return
+                if (len(self.tokens[1])>16):
+                    print("Invalid recordID")
+                    return 
+
+                newRecord = Address_record(self.tokens[1])
+                #clean the input commands
+                self.tokens = " ".join(self.tokens[2:])
+                self.tokens = self.tokens.split('" ')  
+                self.tokens[-1] = self.tokens[-1][0:-2]   
+
+                for entry in self.tokens:#searches tokens 0 to end 
+                    command = entry[0:entry.index("=")] #the command which will be entered
+                    #check for less than 64 characters 
+                    #num of records < 256
+                    if (command == "SN"):
+                        newRecord.SN = entry[entry.index("=")+2:]
+                    elif(command == "GN"):
+                        newRecord.GN = entry[entry.index("=")+2:]
+                    elif(command =="PEM"):
+                        newRecord.PEM = entry[entry.index("=")+2:]
+                    elif (command =="WEM"):
+                        newRecord.WEM = entry[entry.index("=")+2:]
+                    elif(command=="PPH"):
+                        newRecord.PPH = entry[entry.index("=")+2:]
+                    elif(command=="WPH"):
+                        newRecord.WPH = entry[entry.index("=")+2:]
+                    elif (command=="SA"):
+                        newRecord.SA = entry[entry.index("=")+2:]
+                    elif (command=="CITY"):
+                        newRecord.CITY = entry[entry.index("=")+2:]
+                    elif (command=="STP"):
+                        newRecord.STP = entry[entry.index("=")+2:]
+                    elif (command =="CTY"):
+                        newRecord.CTY = entry[entry.index("=")+2:]
+                    elif (command =="PC"):
+                        newRecord.PC = entry[entry.index("=")+2:]
+                    
+                    else:
+                        print("Invalid entry. Please try to add record again.")
+                        return
+                #newRecord is added to the user's personal database 
+                f = open((self.current_user + ".txt"), "a")#"a" for appending to textfile so not to erase data
+                f.write(newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
+                newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
+                newRecord.CTY+";"+newRecord.PC+"\n")
+                f.close()
+                print("OK")
+                return
+            
+        else: 
+            print("Duplicate recordID")
+            return
+
+    def add_record_from_import(self):
+        """
+        Adds a new record for user
+        """ 
+            
         #if there is currently an active login
         if self.login_state == 0: 
             print("No active login session")
@@ -376,63 +523,237 @@ class Address_Book:
             print("Admin active")
             return
 
-        if (check_recordID(self.tokens[1]) == 0)
-            {
-                for entry in self.tokens[2:]:#searches tokens 2 to end 
-                    command = string[0:entry.index(=)] #the command which will be entered
-                    if (command == "SN")
-
-                    elif(command == "GN")
-
-                    elif(command =="PEM")
-                        
-                    elif (command =="WEM")
-                        
-                    elif(command=="PPH")
-
-                    elif(command=="WPH")
-                    
-                    elif (command=="SA")
-                    
-                    elif (command=="CITY")
-                    
-                    elif (command=="STP")
-
-                    elif (command =="CTY")
-                    
-                    elif (command =="PC")
-                    
-                    else
-                        print("Invalid entry. Please try to add record again.")
-            }
-        else: 
-            print("The given recordID " + self.tokens[1] +"")
+        if (self.check_recordID(self.tokens[0]) == 0):
+            for entry in self.tokens[0:]:
+                if (len(entry) > 64):
+                    print("One or more invalid record data fields")
+                    return
+            if (self.count_records() > 255):
+                print("Number of records exceeds maximum")
+                return
+            if (len(self.tokens[0])>16):
+                print("Invalid recordID")
+                return                 
                 
-
-# this mod needs to check the 5 credintials things liek admin not logged in,etc, if all met, it
-#  adds based on self.tokens[1] == first thing they passed, self.tokens[2]......
-
-
-    #TODO:
+            newRecord = Address_record(self.tokens[0])
+    
+            newRecord.SN = self.tokens[1]     
+            newRecord.GN = self.tokens[2] 
+            newRecord.PEM = self.tokens[3]                   
+            newRecord.WEM = self.tokens[4]                    
+            newRecord.PPH = self.tokens[5]    
+            newRecord.WPH = self.tokens[6]
+            newRecord.SA = self.tokens[7]
+            newRecord.CITY = self.tokens[8]
+            newRecord.STP = self.tokens[9]
+            newRecord.CTY = self.tokens[10]
+            newRecord.PC = self.tokens[11].rstrip()
+                        
+            #newRecord is added to the user's personal database 
+            f = open((self.current_user + ".txt"), "a")#"a" for appending to textfile so not to erase data
+            f.write(newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
+            newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
+            newRecord.CTY+";"+newRecord.PC+"\n")
+            f.close()
+                
+        else: 
+            print("Duplicate recordID")
+            return
+    
     def delete_record(self):
         """
         Deletes a record from the database
         """ 
-        print("delete record called")    
-    
-    #TODO:
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        if self.current_user == "admin":
+            print("Admin not authorized")
+            return
+        
+        if self.tokens[1] == None:
+            print("No recordID")
+            return
+        if (len(self.tokens[1])) >64:
+            print("Invalid recordID")
+            return
+
+        if (self.check_recordID(self.tokens[1]) == 0):
+            print("RecordID not found")
+            return
+
+        else:
+            #delete it
+            f = open((self.current_user + ".txt"), "r")
+            lines = f.readlines()
+            for i in range(len(lines)):
+                tokens = lines[i].split(";")
+                if (tokens[0] == self.tokens[1]):
+                    lines[i] = ""
+                    f.close()
+                    outFile = open((self.current_user + ".txt"), "w")
+                    outFile.writelines(lines)
+                    outFile.close()
+                
+            print("OK") 
+            return   
+  
     def edit_record(self):
         """
         Edits a record from the database
         """  
-        print("edit record called")    
+
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        if self.current_user == "admin":
+            print("Admin not authorized")
+            return
+        
+        if self.tokens[1] == None:
+            print("No recordID")
+            return
+        if (len(self.tokens[1])) >64:
+            print("Invalid recordID")
+            return
+        if (self.check_recordID(self.tokens[1]) == 0):
+            print("RecordID not found")
+            return
+        else:
+            #edit it
+            for entry in self.tokens[0:]:
+                if (len(entry) > 64):
+                    print("One or more invalid record data fields")
+                    return
+
+
+
+            f = open((self.current_user + ".txt"), "r")
+            #lines is arry of all lines in current_user.txt
+            lines = f.readlines()
+            #loops through all lines
+            #splits tokens in each line by ";"
+            #tokens[0] = recordID
+            for i in range(len(lines)):
+                tokens = lines[i].split(";") 
+                #if recordID from textfile is the same as the given recordID
+                if (tokens[0] == self.tokens[1]):
+                    
+                    #clean the input commands
+                    self.tokens = " ".join(self.tokens[2:])
+                    self.tokens = self.tokens.split('" ')
+                    
+                    for entry in self.tokens:
+                        command = entry[0:entry.index("=")] #the command which will be entered
+                        #check for less than 64 characters 
+                        #num of records < 256
+                        
+                        if (command == "SN"):
+                            tokens[1] = entry[entry.index("=")+2:]
+                        elif(command == "GN"):
+                            tokens[2] = entry[entry.index("=")+2:]
+                        elif(command =="PEM"):
+                            tokens[3] = entry[entry.index("=")+2:]
+                        elif (command =="WEM"):
+                            tokens[4] = entry[entry.index("=")+2:]
+                        elif(command=="PPH"):
+                            tokens[5] = entry[entry.index("=")+2:]
+                        elif(command=="WPH"):
+                            tokens[6] = entry[entry.index("=")+2:]
+                        elif (command=="SA"):
+                            tokens[7] = entry[entry.index("=")+2:]
+                        elif (command=="CITY"):
+                            tokens[8] = entry[entry.index("=")+2:]
+                        elif (command=="STP"):
+                            tokens[9] = entry[entry.index("=")+2:]
+                        elif (command =="CTY"):
+                            tokens[10] = entry[entry.index("=")+2:]
+                        elif (command =="PC"):
+                            tokens[11] = entry[entry.index("=")+2:]
+                        else:
+                            print("One or more invalid record data fields")
+                    lines[i] = (tokens[0]+";"+ tokens[1]+";"+ tokens[2]+";"+ tokens[3]+";"+ tokens[4]+";"+ 
+                    tokens[5]+";"+ tokens[6]+";"+ tokens[7]+";"+ tokens[8]+";"+ tokens[9]+";"+ tokens[10]+";"+ 
+                    tokens[11])
+                    
+                    f.close()
+                    outFile = open((self.current_user + ".txt"), "w")
+                    outFile.writelines(lines)
+                    outFile.close()
+                        
+                    print("OK") 
+                    return
+                    
+                
+            f.close()
+            print("RecordID not found")      
+            return         
     
     #TODO:
     def get_record(self):
         """
         Gets a record from the database 
         """
-        print("get record called")    
+        if self.login_state == 0: 
+            print("No active login session")
+            return
+        if self.current_user == "admin":
+            print("Admin not authorized")
+            return
+        
+        if self.tokens[1] == None:
+            print("No recordID")
+            return
+        if (len(self.tokens[1])) >64:
+            print("Invalid recordID")
+            return
+
+        if (self.check_recordID(self.tokens[1]) == 0):
+            print("RecordID not found")
+            return
+
+        else:
+            #print it
+            f = open((self.current_user + ".txt"), "r")
+            lines = f.readlines()
+            for i in range(len(lines)):
+                tokens = lines[i].split(";")
+                if (tokens[0] == self.tokens[1]):
+                    print(tokens[0] + " SN="+tokens[1] +" GN="+tokens[2] +" PEM="+tokens[3] +" WEM="+tokens[4] 
+                    +" PPH="+tokens[5] +" WPH="+tokens[6] +" SA="+tokens[7] +" CITY="+tokens[8] +" STP="+tokens[9]
+                    +" CTY="+tokens[10] +" PC="+tokens[11].rstrip())
+                    f.close()
+                    
+                
+            print("OK") 
+            return   
+        
+        
+        # if self.login_state == 0: 
+        #     print("No active login session")
+        #     return
+        # if self.current_user == "admin":
+        #     print("Admin not authorized")
+        #     return
+        
+        # #if self.tokens[1] == None:
+        # #    print("No recordID")
+        # #    return
+        
+        # if (len(self.tokens[1])) >64:
+        #     print("Invalid recordID")
+        #     return
+
+        # if (check_recordID(self.recordID)==0)
+        # {
+           
+        # }
+
+        # #TODO: Invalid fieldname(s)
+
+        # if (self.check_recordID(self.tokens[1]) == 0):
+        #     print("RecordID not found")
+        #     return 
     
     def display_audit_log(self):
         """

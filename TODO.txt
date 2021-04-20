@@ -1,12 +1,3 @@
-
-Import database needs to be implemented
-
-Export database needs to be implemented
-
-Add record needs to be implemented
-
-delete record needs be implemented
-
 Edit record needs to be implemented
 
 Get record needs to be implemented
@@ -23,3 +14,6 @@ Delete user module needs to prevent admin from deleting himself
 Add user module needs to prevent admin from adding another admin
 
 Audit log needs to be implemented as a ciruclar queue
+
+Import module needs to check formatting of inputs
+    add record needs to check formatting of inputs
