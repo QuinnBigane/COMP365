@@ -689,8 +689,7 @@ class Address_Book:
             print("RecordID not found")      
             return         
     
-    #TODO:
-    def get_record(self):
+    def get_record(self): 
         """
         Gets a record from the database 
         """
@@ -711,9 +710,9 @@ class Address_Book:
         if (self.check_recordID(self.tokens[1]) == 0):
             print("RecordID not found")
             return
-
-        else:
-            #print it
+        
+        #print all elements 
+        if (len(self.tokens)<=2):
             f = open((self.current_user + ".txt"), "r")
             lines = f.readlines()
             for i in range(len(lines)):
@@ -722,11 +721,51 @@ class Address_Book:
                     print(tokens[0] + " SN="+tokens[1] +" GN="+tokens[2] +" PEM="+tokens[3] +" WEM="+tokens[4] 
                     +" PPH="+tokens[5] +" WPH="+tokens[6] +" SA="+tokens[7] +" CITY="+tokens[8] +" STP="+tokens[9]
                     +" CTY="+tokens[10] +" PC="+tokens[11].rstrip())
-                    f.close()
-                    
-                
-            print("OK") 
-            return   
+            f.close()
+            print("OK")
+            return
+
+        else:
+            f = open((self.current_user + ".txt"), "r")
+            lines = f.readlines()
+            for i in range(len(lines)):
+                tokens = lines[i].split(";")
+            #field is valid
+            outputValue=self.tokens[1] + " "
+            for i in range(2,len(self.tokens)):
+                #i and loop through all self.tokens
+                if (self.tokens[i] == "SN"): 
+                    outputValue + "SN="+ tokens[1]+" "
+                if self.tokens[i] == "GN":
+                    outputValue + "GN="+ tokens[2]+" "
+                if self.tokens[i] == "PEM":
+                    outputValue + "PEM="+ tokens[3]+" "
+                if self.tokens[i] == "WEM":
+                    outputValue + "WEM="+ tokens[4]+" "
+                if self.tokens[i] == "PPH":
+                    outputValue + "PPH="+ tokens[5]+" "
+                if self.tokens[i] == "WPH":
+                    outputValue + "WPH="+ tokens[6]+" "
+                if self.tokens[i] == "SA":
+                    outputValue + "SA="+ tokens[7]+" "
+                if self.tokens[i] == "CITY":
+                    outputValue + "CITY="+ tokens[8]+" "
+                if self.tokens[i] == "STP":
+                    outputValue + "STP="+ tokens[9] +" "
+                if self.tokens[i] == "CTY":
+                    outputValue + "CTY="+ tokens[10] +" "
+                if self.tokens[i] == "PC":
+                    outputValue + "PC="+ tokens[11].rstrip +" "
+
+                else:
+                    #field invalid
+                    print("Invalid fieldname (s)")
+                    return
+
+            print(outputValue)
+            f.close()
+            return
+              
         
         
         # if self.login_state == 0: 

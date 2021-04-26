@@ -1,8 +1,3 @@
-Edit record needs to be implemented
-
-Get record needs to be implemented
-
-
 SECURITY IMPLEMENTATIONS (NOT a priority yet)
 Login module needs to handle error if user does not enter username with LIN
 
@@ -15,5 +10,11 @@ Add user module needs to prevent admin from adding another admin
 
 Audit log needs to be implemented as a ciruclar queue
 
+Audit log not call current user if None
+
 Import module needs to check formatting of inputs
     add record needs to check formatting of inputs
+
+Get record needs to be able to get only specific fields
+
+Init admin
