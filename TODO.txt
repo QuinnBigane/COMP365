@@ -1,20 +1,26 @@
 SECURITY IMPLEMENTATIONS (NOT a priority yet)
-Login module needs to handle error if user does not enter username with LIN
 
-Login module needs to check that password chosen is valid (meets requirements)
-    change password module needs to use this same code to check when new password is chosen
+Upon being run for the first time, program needs to init the admin user
 
-Delete user module needs to prevent admin from deleting himself
+Login module, change password module
+    needs to check that password chosen is valid 
+    (meets requirements)
 
-Add user module needs to prevent admin from adding another admin
+Import module, add record and add_record_from_import
+    needs to check formatting of inputs 
 
-Audit log needs to be implemented as a ciruclar queue
+count_records, check_recordID, export_database, import_database
+    raise OSerros - is this what we wanna do?
 
-Audit log not call current user if None
+add_record and add_record_from_import 
+    need to be commented
 
-Import module needs to check formatting of inputs
-    add record needs to check formatting of inputs
+get_record
+    need to be commented
 
-Get record needs to be able to get only specific fields
+Audit log 
+    needs to be implemented as a ciruclar queue
 
-Init admin
+
+
+

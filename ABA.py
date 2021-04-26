@@ -27,7 +27,7 @@ class Address_Book:
         #0 = not logged in
         #1 = logged in
         self.login_state = login_state
-        
+        #Begin main loop
         self.driver()
     
     def driver(self):
@@ -35,11 +35,14 @@ class Address_Book:
         """
         Main looping module of the function, waits for user input
         """  
-        print("Address Book Application, version 1.0. Type “HLP” for a list of commands") #print this when the program first starts
-         
+        #print this when the program first starts
+        print("Address Book Application, version 1.0. Type “HLP” for a list of commands") 
+
+        #main loop waiting for user input 
         while(1):
             #prompt user to enter a command
             command = input("ABA > ")
+            #interpret user command
             self.command_line_interpreter(command)
 
     def command_line_interpreter(self, command):
@@ -100,17 +103,22 @@ class Address_Book:
         """
         Verifies user login credentials based on a database of login info
         """  
-        #TODO: Add error handling if user does not enter a username with LIN
-        username = self.tokens[1]
-        infile = open("logininfo.txt", "r")
-
+        #User enters more than just the username
+        if len(self.tokens) > 2:
+            print("Too many command parameters")
+            return
+        #User does not enter a username
+        elif len(self.tokens) == 1:
+            print("Please enter a username")
+            return
         #if there is currently an active login
-        if self.login_state != 0: 
+        elif self.login_state != 0: 
             print("An account is currently active; logout before proceeding")
-        
-
+            return 
         #if there is no currently active login
         else:
+            username = self.tokens[1]
+            infile = open("logininfo.txt", "r")
             #loop through all login data
             lines = infile.readlines()
             for i in range(len(lines)):
@@ -119,14 +127,20 @@ class Address_Book:
                 if toks[0].rstrip() == username:
                     #no password associated with username
                     if len(toks) == 1: 
+                        #Request new password
                         new_password = input("This is the first time the account is being used. You must create a new password. Passwords may contain 1-24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.")
-                        pw_confirmation = input("Reenter the same password: ")
                         #TODO: add error handling if user does not meet password specifications
+                        #if(.........)
+                        
+                        #Request user to input password again
+                        pw_confirmation = input("Reenter the same password: ")
+                        #if the passwords do not match, return without adding password
                         if new_password != pw_confirmation:
                             print("Passwords do not match")
                             infile.close()
                             self.add_to_audit_log("LF")
                             return
+                        #If the passwords do match, add it to the login info and login user
                         else:
                             lines[i] = lines[i].rstrip() + "," + new_password + "\n"
                             infile = open("logininfo.txt", "w")
@@ -139,7 +153,7 @@ class Address_Book:
                             self.add_to_audit_log("L1")
                             self.add_to_audit_log("LS")
                             return
-                    #username has a password
+                    #username has a password associated with it
                     else:
                         password = toks[1].rstrip() #users's password
                         password_guess = input("Enter your password: ")
@@ -151,6 +165,7 @@ class Address_Book:
                             infile.close()
                             self.add_to_audit_log("LS")
                             return
+            #username was not found in login info
             infile.close()
             print("Invalid credentials")
             self.add_to_audit_log("LF")    
@@ -159,65 +174,87 @@ class Address_Book:
         """
         Logs out current user
         """
-        if self.login_state == 0: #no active login session
+        #User enters more than just LOU
+        if len(self.tokens) > 1:
+            print("Too many command parameters")
+            return
+        #no active login session
+        elif self.login_state == 0: 
             print("No active login session")
-
+            return
+        #if there is an active login session
         else:
             self.login_state = 0
             self.add_to_audit_log("LO")
             self.current_user = None
             print("OK")
+            return
  
     def change_password(self):
         """
         Logs out current user
         """ 
+
         if self.login_state == 0: #no active login session
             print("No active login session")
             self.add_to_audit_log("FPC") #if failed password change
             return 
-
-        infile = open("logininfo.txt", "r")
-        lines = infile.readlines()
-        for i in range(len(lines)):
-                toks = lines[i].split(",")
-                #matching username found
-                if toks[0].rstrip() == self.current_user:
-                    if toks[1].rstrip() == self.tokens[1]:
-                        new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
-                        pw_confirmation = input("Reenter the same password: ")
-                        #TODO: add error handling if user does not meet password specifications
-                        if new_password != pw_confirmation:
-                            print("Passwords do not match")
-                            infile.close()
+        #User enters more than just the username
+        elif len(self.tokens > 2):
+            print("Too many command parameters")
+            return
+        #User has entered command correctly
+        else:
+            #check password
+            infile = open("logininfo.txt", "r")
+            lines = infile.readlines()
+            for i in range(len(lines)):
+                    toks = lines[i].split(",")
+                    #matching username found
+                    if toks[0].rstrip() == self.current_user:
+                        #if the given password matches the old password let user create new password
+                        if toks[1].rstrip() == self.tokens[1]:
+                            new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
+                            #TODO: add error handling if user does not meet password specifications
+                            pw_confirmation = input("Reenter the same password: ")
+                            #if the passwords do not match, return without adding password
+                            if new_password != pw_confirmation:
+                                print("Passwords do not match")
+                                infile.close()
+                                self.add_to_audit_log("FPC")
+                                return
+                            #If the passwords do match, add it to the login info
+                            else:
+                                lines[i] = toks[0].rstrip() + "," + new_password + "\n"
+                                infile = open("logininfo.txt", "w")
+                                infile.writelines(lines)
+                                infile.close()
+                                print("OK")
+                                self.current_user = toks[0]
+                                self.login_state = 1
+                                infile.close()
+                                self.add_to_audit_log("SPC")
+                                return
+                        #if given password does not match old password, do not allow change password
+                        else: 
+                            print("Invalid credentials")
                             self.add_to_audit_log("FPC")
                             return
-                        else:
-                            lines[i] = toks[0].rstrip() + "," + new_password + "\n"
-                            infile = open("logininfo.txt", "w")
-                            infile.writelines(lines)
-                            infile.close()
-                            print("OK")
-                            self.current_user = toks[0]
-                            self.login_state = 1
-                            infile.close()
-                            self.add_to_audit_log("SPC")
-                            return
-                    else: 
-                        print("Invalid credentials")
-                        self.add_to_audit_log("FPC")
-                        return
-    
+        
     def list_users(self):
         """
         Display Users
-        """          
+        """
+        #User enters more than just the command
+        if len(self.tokens > 1):
+            print("Too many command parameters")
+            return          
         #if there is currently an active login
-        if self.login_state == 0: 
+        elif self.login_state == 0: 
             print("No active login session")
             return
         #if the admin is not logged in
-        if self.current_user != "admin":
+        elif self.current_user != "admin":
             print("Admin not active")
             return
         #if the admin is logged in
@@ -233,7 +270,8 @@ class Address_Book:
     def display_help(self):
         """
         Displays the help commands
-        """    
+        """
+
         if len(self.tokens) == 2:
             if self.tokens[1] == "HLP": #help
                 print("HLP [<command name>]")
@@ -377,7 +415,7 @@ class Address_Book:
             infile = open((self.current_user + ".txt"), "r")
 
             num_records = 0
-            for line in infile:
+            for _ in infile:
                 num_records += 1
 
             infile.close()
@@ -410,10 +448,10 @@ class Address_Book:
         if self.login_state == 0: #no active login
             print("No active login session")
             return
-        if self.current_user == "admin": #admin user currently logged in
+        elif self.current_user == "admin": #admin user currently logged in
             print("Admin not authorized")
             return
-        if len(self.tokens) < 2: #no input file specified
+        elif len(self.tokens) < 2: #no input file specified
             print("No Output_file specified")
             return
         
@@ -445,11 +483,12 @@ class Address_Book:
         if self.login_state == 0: 
             print("No active login session")
             return
-        if self.current_user == "admin":
+        #if current user is an admin
+        elif self.current_user == "admin":
             print("Admin not authorized")
             return
-
-        if (self.check_recordID(self.tokens[1]) == 0):
+        #TODO: Comment and explain this
+        elif (self.check_recordID(self.tokens[1]) == 0):
                 for entry in self.tokens[1:]:
                     if (len(entry) > 64):
                         print("One or more invalid record data fields")
@@ -564,24 +603,31 @@ class Address_Book:
         """
         Deletes a record from the database
         """ 
+        #If no active login
         if self.login_state == 0: 
             print("No active login session")
             return
-        if self.current_user == "admin":
+        #If current user is admin
+        elif self.current_user == "admin":
             print("Admin not authorized")
             return
-        
-        if self.tokens[1] == None:
+        #if no record ID was given
+        elif self.tokens[1] == None:
             print("No recordID")
             return
-        if (len(self.tokens[1])) >64:
+        #If the length of the record ID is larger than the max
+        elif (len(self.tokens[1])) >64:
             print("Invalid recordID")
             return
-
-        if (self.check_recordID(self.tokens[1]) == 0):
+        #If more than 1 paramater was passed
+        elif len(self.tokens) > 2:
+            print("Invalid recordID")
+            return
+        #If the record ID does not exist
+        elif (self.check_recordID(self.tokens[1]) == 0):
             print("RecordID not found")
             return
-
+        #If the record ID is found
         else:
             #delete it
             f = open((self.current_user + ".txt"), "r")
@@ -602,23 +648,27 @@ class Address_Book:
         """
         Edits a record from the database
         """  
-
+        #If no active login
         if self.login_state == 0: 
             print("No active login session")
             return
+        #If current user is admin
         if self.current_user == "admin":
             print("Admin not authorized")
             return
-        
+        #if no record ID was given
         if self.tokens[1] == None:
             print("No recordID")
             return
+        #If the length of the record ID is larger than the max
         if (len(self.tokens[1])) >64:
             print("Invalid recordID")
             return
+        #If the record ID does not exist
         if (self.check_recordID(self.tokens[1]) == 0):
             print("RecordID not found")
             return
+        #If the record ID was found
         else:
             #edit it
             for entry in self.tokens[0:]:
@@ -693,20 +743,23 @@ class Address_Book:
         """
         Gets a record from the database 
         """
+        #If no active login
         if self.login_state == 0: 
             print("No active login session")
             return
+        #If current user is admin
         if self.current_user == "admin":
             print("Admin not authorized")
             return
-        
+        #if no record ID was given
         if self.tokens[1] == None:
             print("No recordID")
             return
+        #If the length of the record ID is larger than the max
         if (len(self.tokens[1])) >64:
             print("Invalid recordID")
             return
-
+        #If the record ID does not exist
         if (self.check_recordID(self.tokens[1]) == 0):
             print("RecordID not found")
             return
@@ -730,69 +783,42 @@ class Address_Book:
             lines = f.readlines()
             for i in range(len(lines)):
                 tokens = lines[i].split(";")
-            #field is valid
-            outputValue=self.tokens[1] + " "
-            for i in range(2,len(self.tokens)):
-                #i and loop through all self.tokens
-                if (self.tokens[i] == "SN"): 
-                    outputValue + "SN="+ tokens[1]+" "
-                if self.tokens[i] == "GN":
-                    outputValue + "GN="+ tokens[2]+" "
-                if self.tokens[i] == "PEM":
-                    outputValue + "PEM="+ tokens[3]+" "
-                if self.tokens[i] == "WEM":
-                    outputValue + "WEM="+ tokens[4]+" "
-                if self.tokens[i] == "PPH":
-                    outputValue + "PPH="+ tokens[5]+" "
-                if self.tokens[i] == "WPH":
-                    outputValue + "WPH="+ tokens[6]+" "
-                if self.tokens[i] == "SA":
-                    outputValue + "SA="+ tokens[7]+" "
-                if self.tokens[i] == "CITY":
-                    outputValue + "CITY="+ tokens[8]+" "
-                if self.tokens[i] == "STP":
-                    outputValue + "STP="+ tokens[9] +" "
-                if self.tokens[i] == "CTY":
-                    outputValue + "CTY="+ tokens[10] +" "
-                if self.tokens[i] == "PC":
-                    outputValue + "PC="+ tokens[11].rstrip +" "
+                if (tokens[0] == self.tokens[1]):
+                    #field is valid
+                    outputValue=self.tokens[1] + " "
+                    for i in range(2,len(self.tokens)):
+                        #i and loop through all self.tokens
+                        if (self.tokens[i] == "SN"): 
+                            outputValue += "SN="+ tokens[1]+" "
+                        elif self.tokens[i] == "GN":
+                            outputValue += "GN="+ tokens[2]+" "
+                        elif self.tokens[i] == "PEM":
+                            outputValue += "PEM="+ tokens[3]+" "
+                        elif self.tokens[i] == "WEM":
+                            outputValue += "WEM="+ tokens[4]+" "
+                        elif self.tokens[i] == "PPH":
+                            outputValue += "PPH="+ tokens[5]+" "
+                        elif self.tokens[i] == "WPH":
+                            outputValue += "WPH="+ tokens[6]+" "
+                        elif self.tokens[i] == "SA":
+                            outputValue += "SA="+ tokens[7]+" "
+                        elif self.tokens[i] == "CITY":
+                            outputValue += "CITY="+ tokens[8]+" "
+                        elif self.tokens[i] == "STP":
+                            outputValue += "STP="+ tokens[9] +" "
+                        elif self.tokens[i] == "CTY":
+                            outputValue += "CTY="+ tokens[10] +" "
+                        elif self.tokens[i] == "PC":
+                            outputValue += "PC="+ tokens[11].rstrip +" "
 
-                else:
-                    #field invalid
-                    print("Invalid fieldname (s)")
-                    return
+                        else:
+                            #field invalid
+                            print("Invalid fieldname (s)")
+                            return
 
             print(outputValue)
             f.close()
             return
-              
-        
-        
-        # if self.login_state == 0: 
-        #     print("No active login session")
-        #     return
-        # if self.current_user == "admin":
-        #     print("Admin not authorized")
-        #     return
-        
-        # #if self.tokens[1] == None:
-        # #    print("No recordID")
-        # #    return
-        
-        # if (len(self.tokens[1])) >64:
-        #     print("Invalid recordID")
-        #     return
-
-        # if (check_recordID(self.recordID)==0)
-        # {
-           
-        # }
-
-        # #TODO: Invalid fieldname(s)
-
-        # if (self.check_recordID(self.tokens[1]) == 0):
-        #     print("RecordID not found")
-        #     return 
     
     def display_audit_log(self):
         """
@@ -803,20 +829,20 @@ class Address_Book:
             print("No active login session")
             return
         #if the admin is not logged in
-        if self.current_user != "admin":
+        elif self.current_user != "admin":
             print("Admin not active")
             return
         #if the admin is logged in
-        auditlog = open("audit_log.csv", "r")
-        for line in auditlog:
-            print(line.rstrip())  
+        else:    
+            auditlog = open("audit_log.csv", "r")
+            for line in auditlog:
+                print(line.rstrip())  
+            return
     
     def delete_user(self):
         """
         Deletes a user from the Address Book
         """  
-        #TODO: dont let admin delete himself?
-
         username = self.tokens[1]
         
         #if there is currently an active login
@@ -824,32 +850,37 @@ class Address_Book:
             print("No active login session")
             return
         #if the admin is not logged in
-        if self.current_user != "admin":
+        elif self.current_user != "admin":
             print("Admin not active")
             return
         #if the admin is logged in
-        infile = open("logininfo.txt", "r")
-        lines = infile.readlines()
-        for i in range(len(lines)):
-            toks = lines[i].split(",")
-            #if a matching username is found
-            if toks[0].rstrip() == username:
-                #delete it
-                lines[i] = ""
-                infile = open("logininfo.txt", "w")
-                infile.writelines(lines)
-                infile.close()
-                print("Ok")
-                self.add_to_audit_log("DU")
+        else:
+            #do not let admin delete himself
+            if username == "admin":
+                print("That account cannot be deleted")
                 return
-        infile.close()
-        print("Invalid userID")
+            infile = open("logininfo.txt", "r")
+            lines = infile.readlines()
+            for i in range(len(lines)):
+                toks = lines[i].split(",")
+                #if a matching username is found
+                if toks[0].rstrip() == username:
+                    #delete it
+                    lines[i] = ""
+                    infile = open("logininfo.txt", "w")
+                    infile.writelines(lines)
+                    infile.close()
+                    print("Ok")
+                    self.add_to_audit_log("DU")
+                    return
+            infile.close()
+            print("Invalid userID")
+            return
 
     def add_user(self):
         """
         Adds a new user to the Address Book
         """   
-        #TODO: dont let admin add more admins
 
         username = self.tokens[1]
         
@@ -858,26 +889,30 @@ class Address_Book:
             print("No active login session")
             return
         #if the admin is not logged in
-        if self.current_user != "admin":
+        elif self.current_user != "admin":
             print("Admin not active")
             return
         #if the admin is logged in
-        infile = open("logininfo.txt", "r")
-        lines = infile.readlines()
-        for i in range(len(lines)):
-            toks = lines[i].split(",")
-            #if a matching username is found
-            if toks[0].rstrip() == username:
-                #do not add it
-                infile.close()
-                print("Account already exists")
+        else:
+            if username == "admin":
+                print("That account cannot be added")
                 return
-        #if account does not exist
-        infile = open("logininfo.txt", "a")
-        infile.write(username + "\n")
-        infile.close()
-        self.add_to_audit_log("AU")
-        print("Ok")
+            infile = open("logininfo.txt", "r")
+            lines = infile.readlines()
+            for i in range(len(lines)):
+                toks = lines[i].split(",")
+                #if a matching username is found
+                if toks[0].rstrip() == username:
+                    #do not add it
+                    infile.close()
+                    print("Account already exists")
+                    return
+            #if account does not exist
+            infile = open("logininfo.txt", "a")
+            infile.write(username + "\n")
+            infile.close()
+            self.add_to_audit_log("AU")
+            print("Ok")
 
     def add_to_audit_log(self, audit_type):
         #TODO: implement circualr aspect of audit log
