@@ -349,7 +349,6 @@ class Address_Book:
         """
         Imports a database
         """
-        #TODO: check formatting of records being input
         if self.login_state == 0: #no active login
             print("No active login session")
             return
@@ -366,21 +365,12 @@ class Address_Book:
             print("Can’t open Input_file")
             return
             
-        #check file format
+        #check file format (Data fields may be no more than 64 printable ASCII characters in length)
         for line in infile:
-            num_semicolons = 0
-
-            #good_format = bool(re.match(""))
-
-
-            
-            
-            for char in line:
-                if char == ";":
-                    num_semicolons += 1
-            
-            #might be a better way to validate the file is in the correct format
-            if num_semicolons != 11:
+            #Good record format: Bob;Smith;Robert;bobsmith@mail.edu;;8805551212;;;;;;;
+            #recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
+            good_format = re.match(r"[ -~]{1,64}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;([ -~]+@[ -~]+\.[ -~]+){1}|^$;([ -~]+@[ -~]+\.[ -~]+){1}|^$;\d{1,10}|^$;\d{1,10}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;\d{5}|^$", line)
+            if not good_format:
                 print("Input_file invalid format")
                 return
             
@@ -391,14 +381,7 @@ class Address_Book:
                 print("Duplicate recordID")
                 return
 
-        
-        
-        
-        
-        
-        
-        
-        
+
         infile.close()
         infile = open(self.tokens[1], "r")
 
@@ -423,6 +406,7 @@ class Address_Book:
             self.add_record_from_import()   
 
         infile.close()
+        print("OK")
         return
         
     def count_records(self):
@@ -506,58 +490,138 @@ class Address_Book:
         elif self.current_user == "admin":
             print("Admin not authorized")
             return
+        #User did not enter a record ID
+        elif len(self.tokens) < 2:
+            print("No recordID")
+            return
+        
+        #check if recordID passed has correct format
+        elif not re.match("[ -~]{1,64}|''", self.tokens[1]):
+            print("Invalid recordID") 
+            return
+        
         #if the record ID is not in the user database
         elif (self.check_recordID(self.tokens[1]) == 0):
                 #check if any entry exceeds the maximum length
-                for entry in self.tokens[1:]:
-                    if (len(entry) > 64):
-                        print("One or more invalid record data fields")
-                        return
-                #check if the user has exceeded the maximum number of records
-                if (self.count_records() > 255):
-                    print("Number of records exceeds maximum") 
-                    return
-                #check if user has entered a valid record ID
-                if (len(self.tokens[1])>16):
-                    print("Invalid recordID")
-                    return 
+                
+                
+                # for entry in self.tokens[1:]:
+                #     if re.match("", entry)
+                #     # if (len(entry) > 64):
+                #     #     print("One or more invalid record data fields")
+                #     #     return
 
+                # #delete when done
+                # '''
+                # #check if user has entered a valid record ID
+                # if (len(self.tokens[1])>16):
+                #     print("Invalid recordID")
+                #     return
+                
                 newRecord = Address_record(self.tokens[1])
                 #clean the input commands
                 self.tokens = " ".join(self.tokens[2:])
                 self.tokens = self.tokens.split('" ')  
-                self.tokens[-1] = self.tokens[-1][0:-2]   
+                self.tokens[-1] = self.tokens[-1][0:-1]   
 
                 for entry in self.tokens:#searches tokens 0 to end 
+                    print(entry)
+                    if(entry == ""):
+                        continue
                     command = entry[0:entry.index("=")] #the command which will be entered
                     #check for less than 64 characters 
                     #num of records < 256
                     if (command == "SN"):
-                        newRecord.SN = entry[entry.index("=")+2:]
+                        SN = entry[entry.index("=")+2:]
+                        print(SN)
+                        if re.match(r"[ -~]{1,64}|''", SN):
+                            newRecord.SN = SN
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif(command == "GN"):
-                        newRecord.GN = entry[entry.index("=")+2:]
+                        GN = entry[entry.index("=")+2:]
+                        if re.match(r"[ -~]{1,64}|''", GN):
+                            newRecord.GN = GN
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif(command =="PEM"):
-                        newRecord.PEM = entry[entry.index("=")+2:]
+                        PEM = entry[entry.index("=")+2:]
+                        if re.match(r"([ -~]+@[ -~]+\.[ -~]+){1}|''", PEM):
+                            newRecord.PEM = PEM
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif (command =="WEM"):
-                        newRecord.WEM = entry[entry.index("=")+2:]
+                        WEM = entry[entry.index("=")+2:]
+                        if re.match(r"([ -~]+@[ -~]+\.[ -~]+){1}|''", WEM):
+                            newRecord.WEM = WEM
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif(command=="PPH"):
-                        newRecord.PPH = entry[entry.index("=")+2:]
+                        PPH = entry[entry.index("=")+2:]
+                        print(PPH)
+                        if re.match(r"\d{1,10}|''", PPH):
+                            newRecord.PPH = PPH
+                            print("entered")
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif(command=="WPH"):
-                        newRecord.WPH = entry[entry.index("=")+2:]
+                        WPH = entry[entry.index("=")+2:]
+                        if re.match(r"\d{1,10}|''", WPH):
+                            newRecord.WPH = WPH
                     elif (command=="SA"):
                         newRecord.SA = entry[entry.index("=")+2:]
+                        SA = entry[entry.index("=")+2:]
+                        if re.match(r"[ -~]{1,64}|''", SA):
+                            newRecord.SA = SA
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif (command=="CITY"):
-                        newRecord.CITY = entry[entry.index("=")+2:]
+                        CITY = entry[entry.index("=")+2:]
+                        if re.match(r"[ -~]{1,64}|''", CITY):
+                            newRecord.CITY = CITY
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif (command=="STP"):
-                        newRecord.STP = entry[entry.index("=")+2:]
+                        STP = entry[entry.index("=")+2:]
+                        if re.match(r"[ -~]{1,64}|''", STP):
+                            newRecord.STP = STP
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif (command =="CTY"):
-                        newRecord.CTY = entry[entry.index("=")+2:]
+                        CTY = entry[entry.index("=")+2:]
+                        if re.match(r"[ -~]{1,64}|''", CTY):
+                            newRecord.CTY = CTY
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif (command =="PC"):
-                        newRecord.PC = entry[entry.index("=")+2:]
+                        PC = entry[entry.index("=")+2:]
+                        if re.match(r"\d{5}|''", PC):
+                            newRecord.PC = PC
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     
                     else:
                         print("Invalid entry. Please try to add record again.")
                         return
+
+
+
+
+                        
+                #check if the user has exceeded the maximum number of records
+                if (self.count_records() > 255):
+                    print("Number of records exceeds maximum") 
+                    return
                 #newRecord is added to the user's personal database 
                 f = open((self.current_user + ".txt"), "a")#"a" for appending to textfile so not to erase data
                 f.write(newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
@@ -615,7 +679,7 @@ class Address_Book:
             newRecord.PC = self.tokens[11].rstrip()
                         
             #newRecord is added to the user's personal database 
-            f = open((self.current_user + ".txt"), "a")#"a" for appending to textfile so not to erase data
+            f = open((self.current_user.rstrip() + ".txt"), "a")#"a" for appending to textfile so not to erase data
             f.write(newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
             newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
             newRecord.CTY+";"+newRecord.PC+"\n")

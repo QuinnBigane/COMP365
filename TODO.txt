@@ -1,27 +1,11 @@
 SECURITY IMPLEMENTATIONS
 
-COMMENTING/INIT
-
-    #TOM ?
-    add_record and add_record_from_import 
-        need to be commented
-
-    #Quinn
-    get_record
-        need to be commented
-
-
-
 
 Regular Expressions
     #Quinn
     Login module, change password module
         needs to check that password chosen is valid 
         (meets requirements)
-
-    #TOM
-    Import module, add record and add_record_from_import
-        needs to check formatting of inputs 
 
 
 DEATH
@@ -30,3 +14,4 @@ DEATH
 
 
 
+Only 7 users + 1 admin user allowed
