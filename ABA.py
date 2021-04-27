@@ -939,17 +939,34 @@ class Address_Book:
         #if there is currently an active login
         if self.login_state == 0: 
             print("No active login session")
-            return
         #if the admin is not logged in
         elif self.current_user != "admin":
             print("Admin not active")
-            return
+        #if user ID is provided
+        elif len(self.tokens) > 1:
+            #if valid user ID
+            login_info = open("logininfo.txt", "r")
+            lines = login_info.readlines()
+            for i in range(len(lines)):
+                user_pass = lines[i].split(",")
+                #if a matching username is found
+                if user_pass[0].rstrip() == self.tokens[1]:
+                    #display audit log for that user
+                    login_info.close()
+                    auditlog = open("audit_log.csv", "r")
+                    for line in auditlog:
+                        audit_record = line.split(",")
+                        if audit_record[3].rstrip() == self.tokens[1]:
+                            print(line.rstrip())
+                    print("Ok")
+                    return
+            print("Invalid userID")
         #if the admin is logged in
         else:    
             auditlog = open("audit_log.csv", "r")
             for line in auditlog:
                 print(line.rstrip())  
-            return
+        return
     
     def delete_user(self):
         """
@@ -1032,18 +1049,27 @@ class Address_Book:
             print("Ok")
 
     def add_to_audit_log(self, audit_type):
-        #TODO: implement circualr aspect of audit log
-        auditlog = open("audit_log.csv", "a")
+        auditlog_r = open("audit_log.csv", "r")
+        #If reached max length of audit log, delete first line
+        lines = auditlog_r.readlines()
+        if len(lines) > 511:
+            auditlog_r.close()
+            auditlog_w = open("audit_log.csv", "w")
+            auditlog_w.writelines(lines[1:])
+            auditlog_w.close()
         e = datetime.datetime.now()
+        #if there is currently no user
+        auditlog_a = open("audit_log.csv", "a")
         if self.current_user == None:
-            auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
+            auditlog_a.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
             str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
             audit_type + "," + "\n")   
+        #if there is a user
         else:
-            auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
+            auditlog_a.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
                 str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
-                audit_type + "," + str(self.current_user) + "\n")      
-        auditlog.close()
+                audit_type + "," + str(self.current_user.rstrip()) + "\n")      
+        auditlog_a.close()
 
         
 
