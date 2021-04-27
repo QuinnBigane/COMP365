@@ -213,6 +213,7 @@ class Address_Book:
             #If the user eneterd no password or multiple
             if len(self.tokens) == 1 or len(self.tokens) > 2:
                 print("Invalid Credentials")
+                self.add_to_audit_log("FPC")
             #check password         
             else:
                 login_info = open("logininfo.txt", "r")
@@ -233,21 +234,21 @@ class Address_Book:
                                     print("Passwords do not match")
                                     login_info.close()
                                     self.add_to_audit_log("FPC")
-                                
+                                    return
                                 #maxsize of password => 24 characters, upercase or lowercase letters and numbers
                                 #Check if password contains only uppercase, only lowercase, or only numbers
-                                elif not re.match(r"([a-zA-Z0-9]){1,24}", new_password):
+                                elif not re.fullmatch(r"([a-zA-Z0-9]){1,24}", new_password):
                                     print("Password contains illegal characters")
                                     login_info.close()
                                     self.add_to_audit_log("FPC")
-                                    
+                                    return
                                 #TODO: Common password check, length greater than 8, not one of top 100 passwords from adobe break
                                 #elif len(new_password) < 8:
                                 #    print("Password is too easy to guess")
 
                                 #If the passwords do match, add it to the login info
                                 else:
-                                    lines[i] = lines[0].rstrip() + "," + new_password + "\n"
+                                    lines[i] = self.current_user + "," + new_password + "\n"
                                     login_info.close()
                                     login_info = open("logininfo.txt", "w")
                                     login_info.writelines(lines)
@@ -256,23 +257,19 @@ class Address_Book:
                                     self.current_user = user_pass[0]
                                     self.login_state = 1
                                     self.add_to_audit_log("SPC")
-                                    
+                                    return
                             #if given password does not match old password, do not allow change password
                             else: 
                                 print("Invalid credentials")
                                 login_info.close()
                                 self.add_to_audit_log("FPC")
+                                return
         return
         
     def list_users(self):
         """
         Display Users
         """
-        #TODO:What should we do if the user miss enters LOU
-        #User enters more than just the command
-        # if len(self.tokens > 1):
-        #     print("Too many command parameters")
-        #     return          
         #if there is currently an active login
         if self.login_state == 0: 
             print("No active login session")
@@ -295,7 +292,6 @@ class Address_Book:
         """
         Displays the help commands
         """
-
         if len(self.tokens) == 2:
             if self.tokens[1] == "HLP": #help
                 print("HLP [<command name>]")
@@ -327,7 +323,7 @@ class Address_Book:
                 print("EXD <Output_file>")
             elif self.tokens[1] == "EXT": #exit
                 print("EXT")
-            else:
+            else: #user entered an incorrect command
                 print("LIN <userID>")
                 print("LOU")
                 print("CHP <old password>")
@@ -344,7 +340,7 @@ class Address_Book:
                 print("HLP [<command name>]")
                 print("EXT")
         
-        else: #if user only entered HLP or an incorrect command
+        else: #if user only entered HLP
             print("LIN <userID>")
             print("LOU")
             print("CHP <old password>")
@@ -362,6 +358,7 @@ class Address_Book:
             print("EXT")
 
         print("OK")
+        return
 
     def import_database(self):
         """
@@ -1013,6 +1010,9 @@ class Address_Book:
                 return
             infile = open("logininfo.txt", "r")
             lines = infile.readlines()
+            if len(lines) > 7:
+                print("That account cannot be added")
+                return
             for i in range(len(lines)):
                 toks = lines[i].split(",")
                 #if a matching username is found
