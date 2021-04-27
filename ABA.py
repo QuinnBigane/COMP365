@@ -369,6 +369,12 @@ class Address_Book:
         #check file format
         for line in infile:
             num_semicolons = 0
+
+            #good_format = bool(re.match(""))
+
+
+            
+            
             for char in line:
                 if char == ";":
                     num_semicolons += 1
@@ -385,6 +391,14 @@ class Address_Book:
                 print("Duplicate recordID")
                 return
 
+        
+        
+        
+        
+        
+        
+        
+        
         infile.close()
         infile = open(self.tokens[1], "r")
 
@@ -492,15 +506,18 @@ class Address_Book:
         elif self.current_user == "admin":
             print("Admin not authorized")
             return
-        #TODO: Comment and explain this
+        #if the record ID is not in the user database
         elif (self.check_recordID(self.tokens[1]) == 0):
+                #check if any entry exceeds the maximum length
                 for entry in self.tokens[1:]:
                     if (len(entry) > 64):
                         print("One or more invalid record data fields")
                         return
+                #check if the user has exceeded the maximum number of records
                 if (self.count_records() > 255):
                     print("Number of records exceeds maximum") 
                     return
+                #check if user has entered a valid record ID
                 if (len(self.tokens[1])>16):
                     print("Invalid recordID")
                     return 
@@ -563,18 +580,22 @@ class Address_Book:
         if self.login_state == 0: 
             print("No active login session")
             return
-        if self.current_user == "admin":
+        #if current user is an admin
+        elif self.current_user == "admin":
             print("Admin active")
             return
-
-        if (self.check_recordID(self.tokens[0]) == 0):
+        #if the record is not in the database
+        elif (self.check_recordID(self.tokens[0]) == 0):
+            #check if any entry exceeds the maximum length
             for entry in self.tokens[0:]:
                 if (len(entry) > 64):
                     print("One or more invalid record data fields")
                     return
+            #check if the user has exceeded the maximum number of records
             if (self.count_records() > 255):
                 print("Number of records exceeds maximum")
                 return
+            #check if user has entered a valid record ID
             if (len(self.tokens[0])>16):
                 print("Invalid recordID")
                 return                 
@@ -771,10 +792,13 @@ class Address_Book:
         
         #print all elements 
         if (len(self.tokens)<=2):
+            #Open the users file
             f = open((self.current_user + ".txt"), "r")
             lines = f.readlines()
+            #loop through the data
             for i in range(len(lines)):
                 tokens = lines[i].split(";")
+                #when matching record ID found, print it
                 if (tokens[0] == self.tokens[1]):
                     print(tokens[0] + " SN="+tokens[1] +" GN="+tokens[2] +" PEM="+tokens[3] +" WEM="+tokens[4] 
                     +" PPH="+tokens[5] +" WPH="+tokens[6] +" SA="+tokens[7] +" CITY="+tokens[8] +" STP="+tokens[9]
@@ -782,15 +806,18 @@ class Address_Book:
             f.close()
             print("OK")
             return
-
+        #print specfic elements
         else:
+            #open the users file
             f = open((self.current_user + ".txt"), "r")
             lines = f.readlines()
+            #loop through the data
             for i in range(len(lines)):
                 tokens = lines[i].split(";")
+                #if matching record ID found
                 if (tokens[0] == self.tokens[1]):
-                    #field is valid
                     outputValue=self.tokens[1] + " "
+                    #loop through parsed command, printing matching 
                     for i in range(2,len(self.tokens)):
                         #i and loop through all self.tokens
                         if (self.tokens[i] == "SN"): 
