@@ -27,17 +27,16 @@ class Address_Book:
         try:
             open("logininfo.txt", "r")
         except OSError: #if file cannot be opened
-            infile = open("logininfo.txt", "w")
-            infile.write("admin")
-            infile.close()
+            login_info = open("logininfo.txt", "w")
+            login_info.write("admin")
+            login_info.close()
         #0 = not logged in
         #1 = logged in
         self.login_state = login_state
         self.current_user = current_user
         #Begin main loop
         self.driver()
-        
-    
+           
     def driver(self):
             
         """
@@ -111,188 +110,186 @@ class Address_Book:
         """
         Verifies user login credentials based on a database of login info
         """  
-        #User enters more than just the username
-        if len(self.tokens) > 2:
-            print("Too many command parameters")
-            return
-        #User does not enter a username
-        elif len(self.tokens) == 1:
-            print("Please enter a username")
-            return
         #if there is currently an active login
-        elif self.login_state != 0: 
-            print("An account is currently active; logout before proceeding")
-            return 
-        #if there is no currently active login
+        if self.login_state != 0: 
+            print("An account is currently active; logout before proceeding") 
+        #if the user entered no username or mulitple
+        elif len(self.tokens) == 1 or len(self.tokens) > 2:
+            print("Invalid Credentials")
+        #check password
         else:
-            username = self.tokens[1]
-            infile = open("logininfo.txt", "r")
+            login_info = open("logininfo.txt", "r")
             #loop through all login data
-            lines = infile.readlines()
+            lines = login_info.readlines()
             for i in range(len(lines)):
-                toks = lines[i].split(",")
+                user_pass = lines[i].split(",")
                 #matching username found
-                if toks[0].rstrip() == username:
+                if user_pass[0].rstrip() == self.tokens[1]:
                     #no password associated with username
-                    if len(toks) == 1: 
+                    if len(user_pass) == 1: 
                         #Request new password
                         new_password = input("This is the first time the account is being used. You must create a new password. Passwords may contain 1-24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.")
-
                         #Request user to input password again
                         pw_confirmation = input("Reenter the same password: ")
                         #if the passwords do not match, return without adding password
                         if new_password != pw_confirmation:
                             print("Passwords do not match")
-                            infile.close()
+                            login_info.close()
                             self.add_to_audit_log("LF")
-                            return
-
                         #maxsize of password => 24 characters, upercase or lowercase letters and numbers
-                        elif not re.match(r"[A-Za-z0-9]{1,24}", new_password):
-                            print(new_password)
+                        #Check if password contains only uppercase, only lowercase, or only numbers                        
+                        elif not re.fullmatch(r"[A-Za-z0-9]{1,24}", new_password):
                             print("Password contains illegal characters")
-                            infile.close()
+                            login_info.close()
                             self.add_to_audit_log("LF")
-                            return
-
                         #TODO: Common password check, length greater than 8, not one of top 100 passwords from adobe break
                         #elif len(new_password) < 8:
                         #    print("Password is too easy to guess")
 
-                        #Check if password contains only uppercase, only lowercase, or only numbers
                         #If the passwords do match, add it to the login info and login user
                         else:
                             lines[i] = lines[i].rstrip() + "," + new_password + "\n"
-                            infile = open("logininfo.txt", "w")
-                            infile.writelines(lines)
-                            infile.close()
+                            login_info.close()
+                            login_info = open("logininfo.txt", "w")
+                            login_info.writelines(lines)
+                            login_info.close()
                             print("OK")
-                            self.current_user = toks[0]
+                            self.current_user = user_pass[0]
                             self.login_state = 1
-                            infile.close()
                             self.add_to_audit_log("L1")
                             self.add_to_audit_log("LS")
-                            return
                     #username has a password associated with it
                     else:
-                        password = toks[1].rstrip() #users's password
                         password_guess = input("Enter your password: ")
-                        if password == password_guess: #correct password entered
+                        if user_pass[1].rstrip() == password_guess: #correct password entered
                             #set current user variables
-                            self.current_user = toks[0]
+                            self.current_user = user_pass[0]
                             self.login_state = 1
                             print("OK")
-                            infile.close()
+                            login_info.close()
                             self.add_to_audit_log("LS")
-                            return
+                        else:
+                            login_info.close()
+                            print("Invalid credentials")
+                            self.add_to_audit_log("LF")
+                    return
             #username was not found in login info
-            infile.close()
+            login_info.close()
             print("Invalid credentials")
-            self.add_to_audit_log("LF")    
+            self.add_to_audit_log("LF")
+        return    
 
     def logout(self):
         """
         Logs out current user
         """
+        #TODO:What should we do if the user miss enters LOU
+
         #User enters more than just LOU
-        if len(self.tokens) > 1:
-            print("Too many command parameters")
-            return
+        # if len(self.tokens) > 1:
+        #     print("Too many command parameters")
+        #     return
         #no active login session
-        elif self.login_state == 0: 
+        if self.login_state == 0: 
             print("No active login session")
-            return
+            
         #if there is an active login session
         else:
             self.login_state = 0
             self.add_to_audit_log("LO")
             self.current_user = None
             print("OK")
-            return
+        return
  
     def change_password(self):
         """
         Logs out current user
         """ 
-
         if self.login_state == 0: #no active login session
             print("No active login session")
-            self.add_to_audit_log("FPC") #if failed password change
-            return 
-        #User enters more than just the username
-        elif len(self.tokens) > 2:
-            print("Too many command parameters")
-            return
+            self.add_to_audit_log("FPC") #if failed password change 
         #User has entered command correctly
         else:
-            #check password
-            infile = open("logininfo.txt", "r")
-            lines = infile.readlines()
-            for i in range(len(lines)):
-                    toks = lines[i].split(",")
-                    #matching username found
-                    if toks[0].rstrip() == self.current_user:
-                        #if the given password matches the old password let user create new password
-                        if toks[1].rstrip() == self.tokens[1]:
-                            new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
-                            pw_confirmation = input("Reenter the same password: ")
-                            #if the passwords do not match, return without adding password
-                            if new_password != pw_confirmation:
-                                print("Passwords do not match")
-                                infile.close()
+            #If the user eneterd no password or multiple
+            if len(self.tokens) == 1 or len(self.tokens) > 2:
+                print("Invalid Credentials")
+            #check password         
+            else:
+                login_info = open("logininfo.txt", "r")
+                #loop through all login data
+                lines = login_info.readlines()
+                for i in range(len(lines)):
+                        user_pass = lines[i].split(",")
+                        #matching username found
+                        if user_pass[0].rstrip() == self.current_user:
+                            #if the given password matches the old password let user create new password
+                            if user_pass[1].rstrip() == self.tokens[1]:
+                                #Request a new password
+                                new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
+                                #Request user to input password again
+                                pw_confirmation = input("Reenter the same password: ")
+                                #if the passwords do not match, return without adding password
+                                if new_password != pw_confirmation:
+                                    print("Passwords do not match")
+                                    login_info.close()
+                                    self.add_to_audit_log("FPC")
+                                
+                                #maxsize of password => 24 characters, upercase or lowercase letters and numbers
+                                #Check if password contains only uppercase, only lowercase, or only numbers
+                                elif not re.match(r"([a-zA-Z0-9]){1,24}", new_password):
+                                    print("Password contains illegal characters")
+                                    login_info.close()
+                                    self.add_to_audit_log("FPC")
+                                    
+                                #TODO: Common password check, length greater than 8, not one of top 100 passwords from adobe break
+                                #elif len(new_password) < 8:
+                                #    print("Password is too easy to guess")
+
+                                #If the passwords do match, add it to the login info
+                                else:
+                                    lines[i] = lines[0].rstrip() + "," + new_password + "\n"
+                                    login_info.close()
+                                    login_info = open("logininfo.txt", "w")
+                                    login_info.writelines(lines)
+                                    login_info.close()
+                                    print("OK")
+                                    self.current_user = user_pass[0]
+                                    self.login_state = 1
+                                    self.add_to_audit_log("SPC")
+                                    
+                            #if given password does not match old password, do not allow change password
+                            else: 
+                                print("Invalid credentials")
+                                login_info.close()
                                 self.add_to_audit_log("FPC")
-                                return
-                            
-                            #maxsize of password => 24 characters, upercase or lowercase letters and numbers
-                            elif not re.match(r"([a-zA-Z0-9]){1,24}", new_password):
-                                print("Password contains illegal characters")
-                                infile.close()
-                                self.add_to_audit_log("FPC")
-                                return
-                            
-                            #If the passwords do match, add it to the login info
-                            else:
-                                lines[i] = toks[0].rstrip() + "," + new_password + "\n"
-                                infile = open("logininfo.txt", "w")
-                                infile.writelines(lines)
-                                infile.close()
-                                print("OK")
-                                self.current_user = toks[0]
-                                self.login_state = 1
-                                infile.close()
-                                self.add_to_audit_log("SPC")
-                                return
-                        #if given password does not match old password, do not allow change password
-                        else: 
-                            print("Invalid credentials")
-                            self.add_to_audit_log("FPC")
-                            return
+        return
         
     def list_users(self):
         """
         Display Users
         """
+        #TODO:What should we do if the user miss enters LOU
         #User enters more than just the command
-        if len(self.tokens > 1):
-            print("Too many command parameters")
-            return          
+        # if len(self.tokens > 1):
+        #     print("Too many command parameters")
+        #     return          
         #if there is currently an active login
-        elif self.login_state == 0: 
+        if self.login_state == 0: 
             print("No active login session")
-            return
         #if the admin is not logged in
         elif self.current_user != "admin":
             print("Admin not active")
-            return
         #if the admin is logged in
-        infile = open("logininfo.txt", "r")
-        lines = infile.readlines()
-        for i in range(len(lines)):
-            toks = lines[i].split(",")
-            #if a matching username is found
-            print(toks[0].rstrip())
-        infile.close()
-        print("Ok")
+        else:
+            infile = open("logininfo.txt", "r")
+            lines = infile.readlines()
+            for i in range(len(lines)):
+                toks = lines[i].split(",")
+                #if a matching username is found
+                print(toks[0].rstrip())
+            infile.close()
+            print("Ok")
+        return
 
     def display_help(self):
         """
