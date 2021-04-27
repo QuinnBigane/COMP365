@@ -1,17 +1,10 @@
 SECURITY IMPLEMENTATIONS
 
-
-Regular Expressions
-    #Quinn
-    Login module, change password module
-        needs to check that password chosen is valid 
-        (meets requirements)
-
-
 DEATH
     Encrypt the files.....
 
 
-
-
 Only 7 users + 1 admin user allowed
+Maximum size of a userID = 16 characters
+Max # of audit records = 512
+no easy to guess passwords

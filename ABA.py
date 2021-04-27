@@ -135,9 +135,7 @@ class Address_Book:
                     if len(toks) == 1: 
                         #Request new password
                         new_password = input("This is the first time the account is being used. You must create a new password. Passwords may contain 1-24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.")
-                        #TODO: add error handling if user does not meet password specifications
-                        #if(.........)
-                        
+
                         #Request user to input password again
                         pw_confirmation = input("Reenter the same password: ")
                         #if the passwords do not match, return without adding password
@@ -146,6 +144,19 @@ class Address_Book:
                             infile.close()
                             self.add_to_audit_log("LF")
                             return
+
+                        #maxsize of password => 24 characters, upercase or lowercase letters and numbers
+                        elif not re.match(r"([a-z][A-Z][0-9]){1:24}", new_password):
+                            print("Password contains illegal characters")
+                            infile.close()
+                            self.add_to_audit_log("LF")
+                            return
+
+                        #TODO: Common password check, length greater than 8, not one of top 100 passwords from adobe break
+                        #elif len(new_password) < 8:
+                        #    print("Password is too easy to guess")
+
+                        #Check if password contains only uppercase, only lowercase, or only numbers
                         #If the passwords do match, add it to the login info and login user
                         else:
                             lines[i] = lines[i].rstrip() + "," + new_password + "\n"
@@ -221,7 +232,6 @@ class Address_Book:
                         #if the given password matches the old password let user create new password
                         if toks[1].rstrip() == self.tokens[1]:
                             new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
-                            #TODO: add error handling if user does not meet password specifications
                             pw_confirmation = input("Reenter the same password: ")
                             #if the passwords do not match, return without adding password
                             if new_password != pw_confirmation:
@@ -229,6 +239,14 @@ class Address_Book:
                                 infile.close()
                                 self.add_to_audit_log("FPC")
                                 return
+                            
+                            #maxsize of password => 24 characters, upercase or lowercase letters and numbers
+                            elif not re.match(r"([a-z][A-Z][0-9]){1:24}", new_password):
+                                print("Password contains illegal characters")
+                                infile.close()
+                                self.add_to_audit_log("LF")
+                                return
+                            
                             #If the passwords do match, add it to the login info
                             else:
                                 lines[i] = toks[0].rstrip() + "," + new_password + "\n"
@@ -481,7 +499,6 @@ class Address_Book:
         """
         Adds a new record for user
         """ 
-        #TODO: check formatting of records being input
         #if there is currently an active login
         if self.login_state == 0: 
             print("No active login session")
