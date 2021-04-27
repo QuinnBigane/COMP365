@@ -5,6 +5,16 @@ DEATH
 
 
 Only 7 users + 1 admin user allowed
-Maximum size of a userID = 16 characters
+Maximum size of a userID = 16 characters + check format of user id in add user
 Max # of audit records = 512
 no easy to guess passwords
+
+handle not enough arguments in most all functions
+display audit log needs to implement userID parameter (optional parameter)
+check formatting of ID record in add record
+
+Check formatting in delete record - also in edit record
+edit record: check formatting of data fields and in get record
+
+get record print OK at end
+get record print field data

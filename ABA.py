@@ -33,8 +33,10 @@ class Address_Book:
         #0 = not logged in
         #1 = logged in
         self.login_state = login_state
+        self.current_user = current_user
         #Begin main loop
         self.driver()
+        
     
     def driver(self):
             
@@ -146,7 +148,8 @@ class Address_Book:
                             return
 
                         #maxsize of password => 24 characters, upercase or lowercase letters and numbers
-                        elif not re.match(r"([a-z][A-Z][0-9]){1:24}", new_password):
+                        elif not re.match(r"[A-Za-z0-9]{1,24}", new_password):
+                            print(new_password)
                             print("Password contains illegal characters")
                             infile.close()
                             self.add_to_audit_log("LF")
@@ -217,7 +220,7 @@ class Address_Book:
             self.add_to_audit_log("FPC") #if failed password change
             return 
         #User enters more than just the username
-        elif len(self.tokens > 2):
+        elif len(self.tokens) > 2:
             print("Too many command parameters")
             return
         #User has entered command correctly
@@ -241,7 +244,7 @@ class Address_Book:
                                 return
                             
                             #maxsize of password => 24 characters, upercase or lowercase letters and numbers
-                            elif not re.match(r"([a-z][A-Z][0-9]){1:24}", new_password):
+                            elif not re.match(r"([a-zA-Z0-9]){1,24}", new_password):
                                 print("Password contains illegal characters")
                                 infile.close()
                                 self.add_to_audit_log("FPC")
@@ -387,7 +390,7 @@ class Address_Book:
         for line in infile:
             #Good record format: Bob;Smith;Robert;bobsmith@mail.edu;;8805551212;;;;;;;
             #recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
-            good_format = re.match(r"[ -~]{1,64}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;([ -~]+@[ -~]+\.[ -~]+){1}|^$;([ -~]+@[ -~]+\.[ -~]+){1}|^$;\d{1,10}|^$;\d{1,10}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;[ -~]{1,64}|^$;\d{5}|^$", line)
+            good_format = re.match(r"[ -~]{1,64}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';([ -~]+@[ -~]+\.[ -~]+){1}|'';([ -~]+@[ -~]+\.[ -~]+){1}|'';\d{1,10}|'';\d{1,10}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';\d{5}|''", line)
             if not good_format:
                 print("Input_file invalid format")
                 return
@@ -507,13 +510,15 @@ class Address_Book:
         elif self.current_user == "admin":
             print("Admin not authorized")
             return
+        
+
         #User did not enter a record ID
-        elif len(self.tokens) < 2:
+        elif "=" in self.tokens[1]:
             print("No recordID")
             return
         
         #check if recordID passed has correct format
-        elif not re.match("[ -~]{1,64}|''", self.tokens[1]):
+        elif not re.fullmatch("[ -~]{1,64}|''", self.tokens[1]) or not re.fullmatch("", self.tokens[1]):
             print("Invalid recordID") 
             return
         
@@ -542,7 +547,6 @@ class Address_Book:
                 self.tokens[-1] = self.tokens[-1][0:-1]   
 
                 for entry in self.tokens:#searches tokens 0 to end 
-                    print(entry)
                     if(entry == ""):
                         continue
                     command = entry[0:entry.index("=")] #the command which will be entered
@@ -550,29 +554,28 @@ class Address_Book:
                     #num of records < 256
                     if (command == "SN"):
                         SN = entry[entry.index("=")+2:]
-                        print(SN)
-                        if re.match(r"[ -~]{1,64}|''", SN):
+                        if re.fullmatch(r"[ -~]{1,64}", SN) or re.fullmatch("", SN):
                             newRecord.SN = SN
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command == "GN"):
                         GN = entry[entry.index("=")+2:]
-                        if re.match(r"[ -~]{1,64}|''", GN):
+                        if re.fullmatch(r"[ -~]{1,64}", GN) or re.fullmatch("", GN):
                             newRecord.GN = GN
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command =="PEM"):
                         PEM = entry[entry.index("=")+2:]
-                        if re.match(r"([ -~]+@[ -~]+\.[ -~]+){1}|''", PEM):
+                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", PEM) or re.fullmatch("", PEM):
                             newRecord.PEM = PEM
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="WEM"):
                         WEM = entry[entry.index("=")+2:]
-                        if re.match(r"([ -~]+@[ -~]+\.[ -~]+){1}|''", WEM):
+                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", WEM) or re.fullmatch("", WEM):
                             newRecord.WEM = WEM
                         else:
                             print("One or more invalid record data fields")
@@ -580,7 +583,7 @@ class Address_Book:
                     elif(command=="PPH"):
                         PPH = entry[entry.index("=")+2:]
                         print(PPH)
-                        if re.match(r"\d{1,10}|''", PPH):
+                        if re.fullmatch(r"\d{1,10}", PPH) or re.fullmatch("", PPH):
                             newRecord.PPH = PPH
                             print("entered")
                         else:
@@ -588,40 +591,40 @@ class Address_Book:
                             return
                     elif(command=="WPH"):
                         WPH = entry[entry.index("=")+2:]
-                        if re.match(r"\d{1,10}|''", WPH):
+                        if re.fullmatch(r"\d{1,10}", WPH) or re.fullmatch("", WPH):
                             newRecord.WPH = WPH
                     elif (command=="SA"):
                         newRecord.SA = entry[entry.index("=")+2:]
                         SA = entry[entry.index("=")+2:]
-                        if re.match(r"[ -~]{1,64}|''", SA):
+                        if re.fullmatch(r"[ -~]{1,64}", SA) or re.fullmatch("", SA):
                             newRecord.SA = SA
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command=="CITY"):
                         CITY = entry[entry.index("=")+2:]
-                        if re.match(r"[ -~]{1,64}|''", CITY):
+                        if re.fullmatch(r"[ -~]{1,64}", CITY) or re.fullmatch("", CITY):
                             newRecord.CITY = CITY
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command=="STP"):
                         STP = entry[entry.index("=")+2:]
-                        if re.match(r"[ -~]{1,64}|''", STP):
+                        if re.fullmatch(r"[ -~]{1,64}", STP) or re.fullmatch("", STP):
                             newRecord.STP = STP
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="CTY"):
                         CTY = entry[entry.index("=")+2:]
-                        if re.match(r"[ -~]{1,64}|''", CTY):
+                        if re.fullmatch(r"[ -~]{1,64}", CTY) or re.fullmatch("", CTY):
                             newRecord.CTY = CTY
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="PC"):
                         PC = entry[entry.index("=")+2:]
-                        if re.match(r"\d{5}|''", PC):
+                        if re.fullmatch(r"\d{5}",PC) or re.fullmatch("", PC):
                             newRecord.PC = PC
                         else:
                             print("One or more invalid record data fields")
@@ -719,7 +722,7 @@ class Address_Book:
             print("Admin not authorized")
             return
         #if no record ID was given
-        elif self.tokens[1] == None:
+        elif len(self.tokens) < 2:
             print("No recordID")
             return
         #If the length of the record ID is larger than the max
@@ -760,19 +763,19 @@ class Address_Book:
             print("No active login session")
             return
         #If current user is admin
-        if self.current_user == "admin":
+        elif self.current_user == "admin":
             print("Admin not authorized")
             return
         #if no record ID was given
-        if self.tokens[1] == None:
+        elif len(self.tokens) < 2:              
             print("No recordID")
             return
         #If the length of the record ID is larger than the max
-        if (len(self.tokens[1])) >64:
+        elif (len(self.tokens[1])) >64:
             print("Invalid recordID")
             return
         #If the record ID does not exist
-        if (self.check_recordID(self.tokens[1]) == 0):
+        elif (self.check_recordID(self.tokens[1]) == 0):
             print("RecordID not found")
             return
         #If the record ID was found
@@ -829,6 +832,7 @@ class Address_Book:
                             tokens[11] = entry[entry.index("=")+2:]
                         else:
                             print("One or more invalid record data fields")
+                            return
                     lines[i] = (tokens[0]+";"+ tokens[1]+";"+ tokens[2]+";"+ tokens[3]+";"+ tokens[4]+";"+ 
                     tokens[5]+";"+ tokens[6]+";"+ tokens[7]+";"+ tokens[8]+";"+ tokens[9]+";"+ tokens[10]+";"+ 
                     tokens[11])
@@ -1031,9 +1035,14 @@ class Address_Book:
         #TODO: implement circualr aspect of audit log
         auditlog = open("audit_log.csv", "a")
         e = datetime.datetime.now()
-        auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
+        if self.current_user == None:
+            auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
             str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
-            audit_type + "," + str(self.current_user) + "\n")      
+            audit_type + "," + "\n")   
+        else:
+            auditlog.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
+                str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
+                audit_type + "," + str(self.current_user) + "\n")      
         auditlog.close()
 
         
