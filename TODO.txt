@@ -4,7 +4,6 @@ DEATH
     Encrypt the files.....
 
 
-Maximum size of a userID = 16 characters + check format of user id in add user
 Max # of audit records = 512
 no easy to guess passwords
 

@@ -6,6 +6,7 @@ Description: This is a secure implementation of an Address Book database
 """
 import datetime 
 import re
+import os
 
 class Address_record:
     def __init__(self, recordID, SN='', GN='', PEM='', WEM='', PPH='', WPH='', SA='', CITY='', STP='', CTY='', PC=''):
@@ -967,8 +968,8 @@ class Address_Book:
         #if the admin is logged in
         else:
             #do not let admin delete himself
-            if username == "admin":
-                print("That account cannot be deleted")
+            if username == "admin" or not re.fullmatch(r"[A-Za-z0-9]{1,16}",username):
+                print("Invalid userID")
                 return
             infile = open("logininfo.txt", "r")
             lines = infile.readlines()
@@ -976,11 +977,14 @@ class Address_Book:
                 toks = lines[i].split(",")
                 #if a matching username is found
                 if toks[0].rstrip() == username:
-                    #delete it
+                    #delete it from login info
                     lines[i] = ""
                     infile = open("logininfo.txt", "w")
                     infile.writelines(lines)
                     infile.close()
+                    #delte user data
+                    if os.path.exists(username+".txt"):
+                        os.remove(username+".txt")
                     print("Ok")
                     self.add_to_audit_log("DU")
                     return
@@ -992,7 +996,6 @@ class Address_Book:
         """
         Adds a new user to the Address Book
         """   
-
         username = self.tokens[1]
         
         #if there is currently an active login
@@ -1005,13 +1008,13 @@ class Address_Book:
             return
         #if the admin is logged in
         else:
-            if username == "admin":
-                print("That account cannot be added")
+            if username == "admin" or not re.fullmatch(r"[A-Za-z0-9]{1,16}",username):
+                print("Invalid userID")
                 return
             infile = open("logininfo.txt", "r")
             lines = infile.readlines()
             if len(lines) > 7:
-                print("That account cannot be added")
+                print("Invalid userID")
                 return
             for i in range(len(lines)):
                 toks = lines[i].split(",")
