@@ -1,13 +1,2 @@
 admin,1
-A,password
-D,2
-E,1
-F,1
-G,1
-H,1
-I,1
-BC,1
-B,77
-W
-X
-Qu,1
+A,1

@@ -1,25 +1,31 @@
-SECURITY IMPLEMENTATIONS (NOT a priority yet)
+SECURITY IMPLEMENTATIONS
 
-Upon being run for the first time, program needs to init the admin user
+COMMENTING/INIT
 
-Login module, change password module
-    needs to check that password chosen is valid 
-    (meets requirements)
+    #TOM ?
+    add_record and add_record_from_import 
+        need to be commented
 
-Import module, add record and add_record_from_import
-    needs to check formatting of inputs 
+    #Quinn
+    get_record
+        need to be commented
 
-count_records, check_recordID, export_database, import_database
-    raise OSerros - is this what we wanna do?
 
-add_record and add_record_from_import 
-    need to be commented
 
-get_record
-    need to be commented
 
-Audit log 
-    needs to be implemented as a ciruclar queue
+Regular Expressions
+    #Quinn
+    Login module, change password module
+        needs to check that password chosen is valid 
+        (meets requirements)
+
+    #TOM
+    Import module, add record and add_record_from_import
+        needs to check formatting of inputs 
+
+
+DEATH
+    Encrypt the files.....
 
 
 

@@ -24,6 +24,12 @@ class Address_record:
         
 class Address_Book:
     def __init__(self, login_state = 0,current_user = None):
+        try:
+            open("logininfo.txt", "r")
+        except OSError: #if file cannot be opened
+            infile = open("logininfo.txt", "w")
+            infile.write("admin")
+            infile.close()
         #0 = not logged in
         #1 = logged in
         self.login_state = login_state
@@ -369,7 +375,6 @@ class Address_Book:
             
             #might be a better way to validate the file is in the correct format
             if num_semicolons != 11:
-                print(num_semicolons)
                 print("Input_file invalid format")
                 return
             
