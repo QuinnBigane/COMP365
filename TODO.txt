@@ -4,15 +4,8 @@ DEATH
     Encrypt the files.....
 
 
-handle not enough arguments in most all functions
-check formatting of ID record in add record
-
-Check formatting in delete record - also in edit record
-edit record: check formatting of data fields and in get record
-
-get record print OK at end
-get record print field data
-
 Admin can not save audit data =>??
 
-make adding records accept ' (as opposed to current ")
+make adding/editing records accept ' (as opposed to current ")
+
+IF you try to add record without quotes you can get around some stuff 

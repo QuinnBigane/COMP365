@@ -4,6 +4,8 @@ Date: 4/18/2021
 Author: Quinn Bigane, Tom Padova, Bo Kulbacki
 Description: This is a secure implementation of an Address Book database 
 """
+
+#بت 
 import datetime 
 import re
 import os
@@ -516,39 +518,24 @@ class Address_Book:
             print("No active login session")
             return
         #if current user is an admin
-        elif self.current_user == "admin":
+        if self.current_user == "admin":
             print("Admin not authorized")
             return
-        
-
         #User did not enter a record ID
-        elif "=" in self.tokens[1]:
+        if len(self.tokens) < 2:
             print("No recordID")
             return
-        
+        #User put field in record ID spot
+        if "=" in self.tokens[1]:
+            print("No recordID")
+            return
         #check if recordID passed has correct format
-        elif not re.fullmatch("[ -~]{1,64}|''", self.tokens[1]) or not re.fullmatch("", self.tokens[1]):
+        if not re.fullmatch(r"[\x00-\x7F]{1,64}", self.tokens[1]):
             print("Invalid recordID") 
             return
         
         #if the record ID is not in the user database
-        elif (self.check_recordID(self.tokens[1]) == 0):
-                #check if any entry exceeds the maximum length
-                
-                
-                # for entry in self.tokens[1:]:
-                #     if re.match("", entry)
-                #     # if (len(entry) > 64):
-                #     #     print("One or more invalid record data fields")
-                #     #     return
-
-                # #delete when done
-                # '''
-                # #check if user has entered a valid record ID
-                # if (len(self.tokens[1])>16):
-                #     print("Invalid recordID")
-                #     return
-                
+        if (self.check_recordID(self.tokens[1]) == 0):
                 newRecord = Address_record(self.tokens[1])
                 #clean the input commands
                 self.tokens = " ".join(self.tokens[2:])
@@ -559,8 +546,6 @@ class Address_Book:
                     if(entry == ""):
                         continue
                     command = entry[0:entry.index("=")] #the command which will be entered
-                    #check for less than 64 characters 
-                    #num of records < 256
                     if (command == "SN"):
                         SN = entry[entry.index("=")+2:]
                         if re.fullmatch(r"[ -~]{1,64}", SN) or re.fullmatch("", SN):
@@ -603,7 +588,6 @@ class Address_Book:
                         if re.fullmatch(r"\d{1,10}", WPH) or re.fullmatch("", WPH):
                             newRecord.WPH = WPH
                     elif (command=="SA"):
-                        newRecord.SA = entry[entry.index("=")+2:]
                         SA = entry[entry.index("=")+2:]
                         if re.fullmatch(r"[ -~]{1,64}", SA) or re.fullmatch("", SA):
                             newRecord.SA = SA
@@ -637,16 +621,11 @@ class Address_Book:
                             newRecord.PC = PC
                         else:
                             print("One or more invalid record data fields")
-                            return
-                    
+                            return                   
                     else:
-                        print("Invalid entry. Please try to add record again.")
+                        print("One or more invalid record data fields")
                         return
-
-
-
-
-                        
+         
                 #check if the user has exceeded the maximum number of records
                 if (self.count_records() > 255):
                     print("Number of records exceeds maximum") 
@@ -659,16 +638,14 @@ class Address_Book:
                 f.close()
                 print("OK")
                 return
-            
-        else: 
-            print("Duplicate recordID")
-            return
 
+        print("Duplicate recordID")
+        return
+    #TODO
     def add_record_from_import(self):
         """
         Adds a new record for user
         """ 
-            
         #if there is currently an active login
         if self.login_state == 0: 
             print("No active login session")
@@ -734,13 +711,9 @@ class Address_Book:
         elif len(self.tokens) < 2:
             print("No recordID")
             return
-        #If the length of the record ID is larger than the max
-        elif (len(self.tokens[1])) >64:
-            print("Invalid recordID")
-            return
-        #If more than 1 paramater was passed
-        elif len(self.tokens) > 2:
-            print("Invalid recordID")
+        #check if recordID passed has correct format
+        if not re.fullmatch(r"[\x00-\x7F]{1,64}", self.tokens[1]):
+            print("Invalid recordID") 
             return
         #If the record ID does not exist
         elif (self.check_recordID(self.tokens[1]) == 0):
@@ -762,7 +735,7 @@ class Address_Book:
                 
             print("OK") 
             return   
-  
+
     def edit_record(self):
         """
         Edits a record from the database
@@ -775,109 +748,156 @@ class Address_Book:
         elif self.current_user == "admin":
             print("Admin not authorized")
             return
-        #if no record ID was given
-        elif len(self.tokens) < 2:              
+        #User did not enter a record ID
+        if len(self.tokens) < 2:
             print("No recordID")
             return
-        #If the length of the record ID is larger than the max
-        elif (len(self.tokens[1])) >64:
-            print("Invalid recordID")
+        #User put field in record ID spot
+        if "=" in self.tokens[1]:
+            print("No recordID")
+            return
+        #check if recordID passed has correct format
+        if not re.fullmatch(r"[\x00-\x7F]{1,64}", self.tokens[1]):
+            print("Invalid recordID") 
             return
         #If the record ID does not exist
-        elif (self.check_recordID(self.tokens[1]) == 0):
+        if (self.check_recordID(self.tokens[1]) == 0):
             print("RecordID not found")
             return
-        #If the record ID was found
-        else:
-            #edit it
-            for entry in self.tokens[0:]:
-                if (len(entry) > 64):
-                    print("One or more invalid record data fields")
-                    return
+        #If the record ID was found edit it
+        f = open((self.current_user + ".txt"), "r")
+        #lines is arry of all lines in current_user.txt
+        lines = f.readlines()
+        #loops through all lines
+        #splits tokens in each line by ";"
+        #tokens[0] = recordID
+        for i in range(len(lines)):
+            tokens = lines[i].split(";") 
+            #if recordID from textfile is the same as the given recordID
+            if (tokens[0] == self.tokens[1]):
+                newRecord = Address_record(self.tokens[1])
+                #clean the input commands
+                self.tokens = " ".join(self.tokens[2:])
+                self.tokens = self.tokens.split('" ')
+                self.tokens[-1] = self.tokens[-1][0:-1]
 
-
-
-            f = open((self.current_user + ".txt"), "r")
-            #lines is arry of all lines in current_user.txt
-            lines = f.readlines()
-            #loops through all lines
-            #splits tokens in each line by ";"
-            #tokens[0] = recordID
-            for i in range(len(lines)):
-                tokens = lines[i].split(";") 
-                #if recordID from textfile is the same as the given recordID
-                if (tokens[0] == self.tokens[1]):
-                    
-                    #clean the input commands
-                    self.tokens = " ".join(self.tokens[2:])
-                    self.tokens = self.tokens.split('" ')
-                    
-                    for entry in self.tokens:
-                        command = entry[0:entry.index("=")] #the command which will be entered
-                        #check for less than 64 characters 
-                        #num of records < 256
-                        
-                        if (command == "SN"):
-                            tokens[1] = entry[entry.index("=")+2:]
-                        elif(command == "GN"):
-                            tokens[2] = entry[entry.index("=")+2:]
-                        elif(command =="PEM"):
-                            tokens[3] = entry[entry.index("=")+2:]
-                        elif (command =="WEM"):
-                            tokens[4] = entry[entry.index("=")+2:]
-                        elif(command=="PPH"):
-                            tokens[5] = entry[entry.index("=")+2:]
-                        elif(command=="WPH"):
-                            tokens[6] = entry[entry.index("=")+2:]
-                        elif (command=="SA"):
-                            tokens[7] = entry[entry.index("=")+2:]
-                        elif (command=="CITY"):
-                            tokens[8] = entry[entry.index("=")+2:]
-                        elif (command=="STP"):
-                            tokens[9] = entry[entry.index("=")+2:]
-                        elif (command =="CTY"):
-                            tokens[10] = entry[entry.index("=")+2:]
-                        elif (command =="PC"):
-                            tokens[11] = entry[entry.index("=")+2:]
+                for entry in self.tokens:
+                    if(entry == ""):
+                        continue
+                    command = entry[0:entry.index("=")] #the command which will be entered
+                    if (command == "SN"):
+                        SN = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"[ -~]{1,64}", SN) or re.fullmatch("", SN):
+                            newRecord.SN = SN
                         else:
                             print("One or more invalid record data fields")
                             return
-                    lines[i] = (tokens[0]+";"+ tokens[1]+";"+ tokens[2]+";"+ tokens[3]+";"+ tokens[4]+";"+ 
-                    tokens[5]+";"+ tokens[6]+";"+ tokens[7]+";"+ tokens[8]+";"+ tokens[9]+";"+ tokens[10]+";"+ 
-                    tokens[11])
-                    
-                    f.close()
-                    outFile = open((self.current_user + ".txt"), "w")
-                    outFile.writelines(lines)
-                    outFile.close()
+                    elif(command == "GN"):
+                        GN = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"[ -~]{1,64}", GN) or re.fullmatch("", GN):
+                            newRecord.GN = GN
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif(command =="PEM"):
+                        PEM = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", PEM) or re.fullmatch("", PEM):
+                            newRecord.PEM = PEM
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif (command =="WEM"):
+                        WEM = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", WEM) or re.fullmatch("", WEM):
+                            newRecord.WEM = WEM
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif(command=="PPH"):
+                        PPH = entry[entry.index("=")+2:]
+                        print(PPH)
+                        if re.fullmatch(r"\d{1,10}", PPH) or re.fullmatch("", PPH):
+                            newRecord.PPH = PPH
+                            print("entered")
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif(command=="WPH"):
+                        WPH = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"\d{1,10}", WPH) or re.fullmatch("", WPH):
+                            newRecord.WPH = WPH
+                    elif (command=="SA"):
+                        SA = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"[ -~]{1,64}", SA) or re.fullmatch("", SA):
+                            newRecord.SA = SA
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif (command=="CITY"):
+                        CITY = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"[ -~]{1,64}", CITY) or re.fullmatch("", CITY):
+                            newRecord.CITY = CITY
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif (command=="STP"):
+                        STP = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"[ -~]{1,64}", STP) or re.fullmatch("", STP):
+                            newRecord.STP = STP
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif (command =="CTY"):
+                        CTY = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"[ -~]{1,64}", CTY) or re.fullmatch("", CTY):
+                            newRecord.CTY = CTY
+                        else:
+                            print("One or more invalid record data fields")
+                            return
+                    elif (command =="PC"):
+                        PC = entry[entry.index("=")+2:]
+                        if re.fullmatch(r"\d{5}",PC) or re.fullmatch("", PC):
+                            newRecord.PC = PC
+                        else:
+                            print("One or more invalid record data fields")
+                            return                   
+                    else:
+                        print("One or more invalid record data fields")
+                        return
                         
-                    print("OK") 
-                    return
-                    
+                
+            lines[i] = (newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
+                newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
+                newRecord.CTY+";"+newRecord.PC+"\n")
                 
             f.close()
-            print("RecordID not found")      
-            return         
-    
+            outFile = open((self.current_user + ".txt"), "w")
+            outFile.writelines(lines)
+            outFile.close()
+                    
+            print("OK") 
+            return
+                
+                
+        f.close()
+        print("RecordID not found")      
+        return         
+
     def get_record(self): 
         """
         Gets a record from the database 
         """
-        #If no active login
+        #if there is currently an active login
         if self.login_state == 0: 
             print("No active login session")
             return
-        #If current user is admin
+        #if current user is an admin
         if self.current_user == "admin":
             print("Admin not authorized")
             return
-        #if no record ID was given
-        if self.tokens[1] == None:
-            print("No recordID")
-            return
-        #If the length of the record ID is larger than the max
-        if (len(self.tokens[1])) >64:
-            print("Invalid recordID")
+        #check if recordID passed has correct format
+        if not re.fullmatch(r"[\x00-\x7F]{1,64}", self.tokens[1]):
+            print("Invalid recordID") 
             return
         #If the record ID does not exist
         if (self.check_recordID(self.tokens[1]) == 0):
@@ -935,7 +955,7 @@ class Address_Book:
                         elif self.tokens[i] == "CTY":
                             outputValue += "CTY="+ tokens[10] +" "
                         elif self.tokens[i] == "PC":
-                            outputValue += "PC="+ tokens[11].rstrip +" "
+                            outputValue += "PC="+ tokens[11].rstrip() +" "
 
                         else:
                             #field invalid
@@ -943,6 +963,7 @@ class Address_Book:
                             return
 
             print(outputValue)
+            print("Ok")
             f.close()
             return
     
