@@ -244,7 +244,7 @@ class Address_Book:
                             elif not re.match(r"([a-z][A-Z][0-9]){1:24}", new_password):
                                 print("Password contains illegal characters")
                                 infile.close()
-                                self.add_to_audit_log("LF")
+                                self.add_to_audit_log("FPC")
                                 return
                             
                             #If the passwords do match, add it to the login info
