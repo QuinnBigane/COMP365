@@ -137,28 +137,35 @@ class Address_Book:
                             print("Passwords do not match")
                             login_info.close()
                             self.add_to_audit_log("LF")
+                            return
                         #maxsize of password => 24 characters, upercase or lowercase letters and numbers
                         #Check if password contains only uppercase, only lowercase, or only numbers                        
-                        elif not re.fullmatch(r"[A-Za-z0-9]{1,24}", new_password):
+                        if not re.fullmatch(r"[A-Za-z0-9]{1,24}", new_password):
                             print("Password contains illegal characters")
                             login_info.close()
                             self.add_to_audit_log("LF")
-                        #TODO: Common password check, length greater than 8, not one of top 100 passwords from adobe break
-                        #elif len(new_password) < 8:
-                        #    print("Password is too easy to guess")
-
+                            return
+                        #Check if the password is too basic or easy to guess
+                        common_password_file = open("common_passwords.txt", "r")
+                        common_passwords = common_password_file.readlines()
+                        common_password_file.close()
+                        if (len(new_password) < 8) or (new_password + '\n' in common_passwords) or (new_password == self.tokens[1]):
+                            print("Password is too easy to guess")
+                            login_info.close()
+                            self.add_to_audit_log("LF")
+                            return
                         #If the passwords do match, add it to the login info and login user
-                        else:
-                            lines[i] = lines[i].rstrip() + "," + new_password + "\n"
-                            login_info.close()
-                            login_info = open("logininfo.txt", "w")
-                            login_info.writelines(lines)
-                            login_info.close()
-                            print("OK")
-                            self.current_user = user_pass[0]
-                            self.login_state = 1
-                            self.add_to_audit_log("L1")
-                            self.add_to_audit_log("LS")
+                        lines[i] = lines[i].rstrip() + "," + new_password + "\n"
+                        login_info.close()
+                        login_info = open("logininfo.txt", "w")
+                        login_info.writelines(lines)
+                        login_info.close()
+                        print("OK")
+                        self.current_user = user_pass[0]
+                        self.login_state = 1
+                        self.add_to_audit_log("L1")
+                        self.add_to_audit_log("LS")
+                        return
                     #username has a password associated with it
                     else:
                         password_guess = input("Enter your password: ")
@@ -169,11 +176,12 @@ class Address_Book:
                             print("OK")
                             login_info.close()
                             self.add_to_audit_log("LS")
+                            return
                         else:
                             login_info.close()
                             print("Invalid credentials")
                             self.add_to_audit_log("LF")
-                    return
+                            return
             #username was not found in login info
             login_info.close()
             print("Invalid credentials")
@@ -238,27 +246,33 @@ class Address_Book:
                                     return
                                 #maxsize of password => 24 characters, upercase or lowercase letters and numbers
                                 #Check if password contains only uppercase, only lowercase, or only numbers
-                                elif not re.fullmatch(r"([a-zA-Z0-9]){1,24}", new_password):
+                                if not re.fullmatch(r"([a-zA-Z0-9]){1,24}", new_password):
                                     print("Password contains illegal characters")
                                     login_info.close()
                                     self.add_to_audit_log("FPC")
                                     return
-                                #TODO: Common password check, length greater than 8, not one of top 100 passwords from adobe break
-                                #elif len(new_password) < 8:
-                                #    print("Password is too easy to guess")
+                                #Check if the password is too basic or easy to guess
+                                common_password_file = open("common_passwords.txt", "r")
+                                common_passwords = common_password_file.readlines()
+                                common_password_file.close()
+                                if len(new_password) < 8 or (new_password + '\n' in common_passwords)or (new_password == self.current_user):
+                                    print("Password is too easy to guess")
+                                    login_info.close()
+                                    self.add_to_audit_log("FPC")
+                                    return
 
                                 #If the passwords do match, add it to the login info
-                                else:
-                                    lines[i] = self.current_user + "," + new_password + "\n"
-                                    login_info.close()
-                                    login_info = open("logininfo.txt", "w")
-                                    login_info.writelines(lines)
-                                    login_info.close()
-                                    print("OK")
-                                    self.current_user = user_pass[0]
-                                    self.login_state = 1
-                                    self.add_to_audit_log("SPC")
-                                    return
+                           
+                                lines[i] = self.current_user + "," + new_password + "\n"
+                                login_info.close()
+                                login_info = open("logininfo.txt", "w")
+                                login_info.writelines(lines)
+                                login_info.close()
+                                print("OK")
+                                self.current_user = user_pass[0]
+                                self.login_state = 1
+                                self.add_to_audit_log("SPC")
+                                return
                             #if given password does not match old password, do not allow change password
                             else: 
                                 print("Invalid credentials")

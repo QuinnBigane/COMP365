@@ -4,8 +4,6 @@ DEATH
     Encrypt the files.....
 
 
-no easy to guess passwords
-
 handle not enough arguments in most all functions
 check formatting of ID record in add record
 
