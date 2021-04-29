@@ -1,5 +1,8 @@
 SECURITY IMPLEMENTATIONS
 
-make adding/editing records accept ' (as opposed to current ")
+Make adding/editing records accept ' (as opposed to current ")
 
 IF you try to add record without quotes you can get around some stuff 
+
+Right now we are checking things like email and postal code for proper formating
+    it does not say this in doc implementation => we should not do that

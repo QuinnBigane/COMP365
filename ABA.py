@@ -557,8 +557,8 @@ class Address_Book:
                 newRecord = Address_record(self.tokens[1])
                 #clean the input commands
                 self.tokens = " ".join(self.tokens[2:])
-                self.tokens = self.tokens.split('" ')  
-                self.tokens[-1] = self.tokens[-1][0:-1]   
+                self.tokens = re.split('" |\' ',self.tokens)
+                self.tokens[-1] = self.tokens[-1][0:-1]  
 
                 for entry in self.tokens:#searches tokens 0 to end 
                     if(entry == ""):
@@ -773,10 +773,10 @@ class Address_Book:
             if (tokens[0] == self.tokens[1]):
                 newRecord = Address_record(self.tokens[1])
                 #clean the input commands
+                # self.clean_inputs(self.tokens[2:])
                 self.tokens = " ".join(self.tokens[2:])
-                self.tokens = self.tokens.split('" ')
+                self.tokens = re.split('" |\' ',self.tokens)
                 self.tokens[-1] = self.tokens[-1][0:-1]
-
                 for entry in self.tokens:
                     if(entry == ""):
                         continue
@@ -888,6 +888,14 @@ class Address_Book:
         f.close()
         print("RecordID not found")      
         return         
+
+    def clean_inputs(self, string):
+        #check if all things end in " when split 
+        self.tokens = " ".join(self.tokens[2:])
+        self.tokens = self.tokens.split('" ')
+        self.tokens[-1] = self.tokens[-1][0:-1]
+        
+        return 1
 
     def get_record(self): 
         """
