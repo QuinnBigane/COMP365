@@ -2,18 +2,19 @@
 Name: ABA.py
 Date: 4/18/2021
 Author: Quinn Bigane, Tom Padova, Bo Kulbacki
-Description: This is a secure implementation of an Address Book database 
+Description: This is a secure implementation of an Address Book database
 """
 
-#بت 
-import datetime 
+#بت
+import datetime
 import re
 import os
 from cryptography.fernet import Fernet
 
 
 class Address_record:
-    def __init__(self, recordID, SN='', GN='', PEM='', WEM='', PPH='', WPH='', SA='', CITY='', STP='', CTY='', PC=''):
+    def __init__(self, recordID,
+    SN='', GN='', PEM='', WEM='', PPH='', WPH='', SA='', CITY='', STP='', CTY='', PC=''):
         self.recordID = recordID
         self.SN = SN
         self.GN = GN
@@ -28,7 +29,7 @@ class Address_record:
         self.PC = PC
         
 class Address_Book:
-    def __init__(self, login_state = 0,current_user = None):
+    def __init__(self, login_state=0, current_user=None):
         try:
             login_info = open("logininfo.txt", "r")
             login_info.close()
@@ -50,17 +51,16 @@ class Address_Book:
         self.current_user = current_user
         #Begin main loop
         self.driver()
-           
+
     def driver(self):
-            
         """
         Main looping module of the function, waits for user input
         """  
         #print this when the program first starts
-        print("Address Book Application, version 1.0. Type “HLP” for a list of commands") 
+        print("Address Book Application, version 1.0. Type “HLP” for a list of commands")
 
-        #main loop waiting for user input 
-        while(1):
+        #main loop waiting for user input
+        while 1:
             #prompt user to enter a command
             command = input("ABA > ")
             #interpret user command
@@ -69,7 +69,7 @@ class Address_Book:
     def command_line_interpreter(self, command):
         """
         Interprets user input and decides what to do based on that
-        """   
+        """
         #parse command entered on spaces
         self.tokens = None
         self.tokens = command.split(" ")
@@ -85,26 +85,20 @@ class Address_Book:
             self.change_password()
         elif self.tokens[0] == "ADU": #add user
             self.add_user()
-            pass
         elif self.tokens[0] == "DEU": #delete user
             self.delete_user()
-            pass
         elif self.tokens[0] == "LSU": #list users
             self.list_users()
         elif self.tokens[0] == "DAL": #display audit log
             self.display_audit_log()
-            pass
         elif self.tokens[0] == "ADR": #add record
             self.add_record()
         elif self.tokens[0] == "DER": #delete record
             self.delete_record()
-            pass
         elif self.tokens[0] == "EDR": #edit record
             self.edit_record()
-            pass
         elif self.tokens[0] == "GER": #get record
             self.get_record()
-            pass
         elif self.tokens[0] == "IMD": #import database
             self.import_database()
         elif self.tokens[0] == "EXD": #export database
@@ -113,20 +107,20 @@ class Address_Book:
             self.exit()
         else:
             print("Unrecognized command")
-    
+
     def exit(self):
         """
         Exits ABA
-        """    
+        """
         exit()
 
     def login(self):
         """
         Verifies user login credentials based on a database of login info
-        """  
+        """
         #if there is currently an active login
-        if self.login_state != 0: 
-            print("An account is currently active; logout before proceeding") 
+        if self.login_state != 0:
+            print("An account is currently active; logout before proceeding")
         #if the user entered no username or mulitple
         elif len(self.tokens) == 1 or len(self.tokens) > 2:
             print("Invalid Credentials")
@@ -141,7 +135,7 @@ class Address_Book:
                 #matching username found
                 if user_pass[0].rstrip() == self.tokens[1]:
                     #no password associated with username
-                    if len(user_pass) == 1: 
+                    if len(user_pass) == 1:
                         #Request new password
                         new_password = input("This is the first time the account is being used. You must create a new password. Passwords may contain 1-24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.")
                         #Request user to input password again
@@ -153,7 +147,7 @@ class Address_Book:
                             self.add_to_audit_log("LF")
                             return
                         #maxsize of password => 24 characters, upercase or lowercase letters and numbers
-                        #Check if password contains only uppercase, only lowercase, or only numbers                        
+                        #Check if password contains only uppercase, only lowercase, or only numbers
                         if not re.fullmatch(r"[A-Za-z0-9]{1,24}", new_password):
                             print("Password contains illegal characters")
                             login_info.close()
@@ -202,20 +196,16 @@ class Address_Book:
             login_info.close()
             print("Invalid credentials")
             self.add_to_audit_log("LF")
-        return    
+        return
 
     def logout(self):
         """
         Logs out current user
         """
-        #User enters more than just LOU
-        # if len(self.tokens) > 1:
-        #     print("Too many command parameters")
-        #     return
         #no active login session
-        if self.login_state == 0: 
+        if self.login_state == 0:
             print("No active login session")
-            
+
         #if there is an active login session
         else:
             self.login_state = 0
@@ -227,17 +217,17 @@ class Address_Book:
     def change_password(self):
         """
         Logs out current user
-        """ 
+        """
         if self.login_state == 0: #no active login session
             print("No active login session")
-            self.add_to_audit_log("FPC") #if failed password change 
+            self.add_to_audit_log("FPC") #if failed password change
         #User has entered command correctly
         else:
             #If the user eneterd no password or multiple
             if len(self.tokens) == 1 or len(self.tokens) > 2:
                 print("Invalid Credentials")
                 self.add_to_audit_log("FPC")
-            #check password         
+            #check password
             else:
                 login_info = open("logininfo.txt", "rb")
                 #loop through all login data
@@ -290,7 +280,7 @@ class Address_Book:
                                 self.add_to_audit_log("SPC")
                                 return
                             #if given password does not match old password, do not allow change password
-                            else: 
+                            else:
                                 print("Invalid credentials")
                                 login_info.close()
                                 self.add_to_audit_log("FPC")
@@ -302,7 +292,7 @@ class Address_Book:
         Display Users
         """
         #if there is currently an active login
-        if self.login_state == 0: 
+        if self.login_state == 0:
             print("No active login session")
         #if the admin is not logged in
         elif self.current_user != "admin":
@@ -370,7 +360,6 @@ class Address_Book:
                 print("EXD <Output_file>")
                 print("HLP [<command name>]")
                 print("EXT")
-        
         else: #if user only entered HLP
             print("LIN <userID>")
             print("LOU")
@@ -404,20 +393,18 @@ class Address_Book:
         if len(self.tokens) < 2: #no input file specified
             print("No Input_file specified")
             return
-        
         try:
             infile = open(self.tokens[1], "r")
         except OSError: #if file cannot be opened
             print("Can’t open Input_file")
             return
-            
         #check file format (Data fields may be no more than 64 printable ASCII characters in length)
         new_records = 0
         for line in infile:
             #Good record format: Bob;Smith;Robert;bobsmith@mail.edu;;8805551212;;;;;;;
             #recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
             tokens = line.split(";")
-            if not(re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[0]) or re.fullmatch("",tokens[0])) or not( 
+            if not(re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[0]) or re.fullmatch("",tokens[0])) or not(
             re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[1]) or re.fullmatch("",tokens[1])) or not(
             re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[2]) or re.fullmatch("",tokens[2])) or not(
             re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[3]) or re.fullmatch("",tokens[3])) or not(
@@ -431,7 +418,6 @@ class Address_Book:
             re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[11]) or  re.fullmatch("",tokens[11])):
                 print("Input_file invalid format")
                 return
-           
 
             if self.check_recordID(tokens[0]) == 1:
                 print("Duplicate recordID")
@@ -449,7 +435,7 @@ class Address_Book:
         #add each record to the user's database
         for line in infile:
             self.add_record_from_import(line.rstrip())
-   
+
         infile.close()
         print("OK")
         return
@@ -458,7 +444,6 @@ class Address_Book:
         """
         Returns the number of records stored in a user's database.
         """
-
         try:
             infile = open((self.current_user + ".txt"), "rb")
 
@@ -484,15 +469,15 @@ class Address_Book:
                 tokens = line.split(b";")
                 tokens[0] = self.decrypt_string(tokens[0])
                 if (recordID == tokens[0]):
-                    f.close() 
+                    f.close()
                     return 1
-            return 0        
+            return 0
         except OSError: #if file cannot be opened
             return 0
 
     def export_database(self):
         """
-        Exports current user database 
+        Exports current user database
         """ 
         if self.login_state == 0: #no active login
             print("No active login session")
@@ -503,15 +488,12 @@ class Address_Book:
         elif len(self.tokens) < 2: #no input file specified
             print("No Output_file specified")
             return
-        
         try:
             outfile = open(self.tokens[1], "a")
         except OSError: #if file cannot be opened
             print("Can’t open Output_file")
             return
-        
         infile = open((self.current_user + ".txt"), 'rb')
-        
         try:
             for line in infile:
                 tokens = line.split(b";")
@@ -521,18 +503,16 @@ class Address_Book:
                 outfile.write(output_line + "\n")
         except Exception: #error writing to file
             print("Error writing Output_file")
-        
         outfile.close()
-        
         print("OK")
-        return       
+        return
 
     def add_record(self):
         """
         Adds a new record for user
-        """ 
+        """
         #if there is currently an active login
-        if self.login_state == 0: 
+        if self.login_state == 0:
             print("No active login session")
             return
         #if current user is an admin
@@ -549,18 +529,16 @@ class Address_Book:
             return
         #check if recordID passed has correct format
         if not re.fullmatch(r"[\x00-\x7F]{1,64}", self.tokens[1]):
-            print("Invalid recordID") 
+            print("Invalid recordID")
             return
-        
         #if the record ID is not in the user database
         if (self.check_recordID(self.tokens[1]) == 0):
                 newRecord = Address_record(self.tokens[1])
                 #clean the input commands
                 self.tokens = " ".join(self.tokens[2:])
                 self.tokens = re.split('" |\' ',self.tokens)
-                self.tokens[-1] = self.tokens[-1][0:-1]  
-
-                for entry in self.tokens:#searches tokens 0 to end 
+                self.tokens[-1] = self.tokens[-1][0:-1]
+                for entry in self.tokens:#searches tokens 0 to end
                     if(entry == ""):
                         continue
                     command = entry[0:entry.index("=")] #the command which will be entered
@@ -639,11 +617,10 @@ class Address_Book:
                             newRecord.PC = PC
                         else:
                             print("One or more invalid record data fields")
-                            return                   
+                            return
                     else:
                         print("One or more invalid record data fields")
                         return
-         
                 #check if the user has exceeded the maximum number of records
                 if (self.count_records() > 255):
                     print("Number of records exceeds maximum") 

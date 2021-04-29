@@ -1,6 +1,5 @@
 SECURITY IMPLEMENTATIONS
 
-Make adding/editing records accept ' (as opposed to current ")
 
 IF you try to add record without quotes you can get around some stuff 
 
