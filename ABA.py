@@ -27,7 +27,7 @@ class Address_record:
         self.STP = STP
         self.CTY = CTY
         self.PC = PC
-        
+
 class Address_Book:
     def __init__(self, login_state=0, current_user=None):
         try:
@@ -55,7 +55,7 @@ class Address_Book:
     def driver(self):
         """
         Main looping module of the function, waits for user input
-        """  
+        """
         #print this when the program first starts
         print("Address Book Application, version 1.0. Type “HLP” for a list of commands")
 
@@ -146,7 +146,8 @@ class Address_Book:
                             login_info.close()
                             self.add_to_audit_log("LF")
                             return
-                        #maxsize of password => 24 characters, upercase or lowercase letters and numbers
+                        #maxsize of password
+                        #24 characters, upercase or lowercase letters and numbers
                         #Check if password contains only uppercase, only lowercase, or only numbers
                         if not re.fullmatch(r"[A-Za-z0-9]{1,24}", new_password):
                             print("Password contains illegal characters")
@@ -157,7 +158,9 @@ class Address_Book:
                         common_password_file = open("common_passwords.txt", "r")
                         common_passwords = common_password_file.readlines()
                         common_password_file.close()
-                        if (len(new_password) < 8) or (new_password + '\n' in common_passwords) or (new_password == self.tokens[1]):
+                        if (len(new_password) < 8) or (
+                            new_password + '\n' in common_passwords) or (
+                            new_password == self.tokens[1]):
                             print("Password is too easy to guess")
                             login_info.close()
                             self.add_to_audit_log("LF")
@@ -221,71 +224,70 @@ class Address_Book:
         if self.login_state == 0: #no active login session
             print("No active login session")
             self.add_to_audit_log("FPC") #if failed password change
+            return
         #User has entered command correctly
         else:
             #If the user eneterd no password or multiple
             if len(self.tokens) == 1 or len(self.tokens) > 2:
                 print("Invalid Credentials")
                 self.add_to_audit_log("FPC")
-            #check password
-            else:
-                login_info = open("logininfo.txt", "rb")
-                #loop through all login data
-                lines = login_info.readlines()
-                for i in range(len(lines)):
-                        user_pass = lines[i].split(b",")
-                        user_pass[0] = self.decrypt_string(user_pass[0])
-                        #matching username found
-                        if user_pass[0].rstrip() == self.current_user:
-                            #if the given password matches the old password let user create new password
-                            user_pass[1] = self.decrypt_string(user_pass[1])
-                            if user_pass[1].rstrip() == self.tokens[1]:
-                                #Request a new password
-                                new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
-                                #Request user to input password again
-                                pw_confirmation = input("Reenter the same password: ")
-                                #if the passwords do not match, return without adding password
-                                if new_password != pw_confirmation:
-                                    print("Passwords do not match")
-                                    login_info.close()
-                                    self.add_to_audit_log("FPC")
-                                    return
-                                #maxsize of password => 24 characters, upercase or lowercase letters and numbers
-                                #Check if password contains only uppercase, only lowercase, or only numbers
-                                if not re.fullmatch(r"([a-zA-Z0-9]){1,24}", new_password):
-                                    print("Password contains illegal characters")
-                                    login_info.close()
-                                    self.add_to_audit_log("FPC")
-                                    return
-                                #Check if the password is too basic or easy to guess
-                                common_password_file = open("common_passwords.txt", "r")
-                                common_passwords = common_password_file.readlines()
-                                common_password_file.close()
-                                if (len(new_password) < 8) or (new_password + '\n' in common_passwords) or (new_password == self.current_user):
-                                    print("Password is too easy to guess")
-                                    login_info.close()
-                                    self.add_to_audit_log("FPC")
-                                    return
-
-                                #If the passwords do match, add it to the login info
-                                login_info.close()
-                                new_password = self.encrypt_string(new_password)
-                                user_pass[0] = self.encrypt_string(self.current_user)
-                                lines[i] = user_pass[0] + b"," + new_password + b"\n"
-                                login_info = open("logininfo.txt", "wb")
-                                login_info.writelines(lines)
-                                login_info.close()
-                                print("OK")
-                                self.login_state = 1
-                                self.add_to_audit_log("SPC")
-                                return
-                            #if given password does not match old password, do not allow change password
-                            else:
-                                print("Invalid credentials")
+                return
+            login_info = open("logininfo.txt", "rb")
+            #loop through all login data
+            lines = login_info.readlines()
+            for i in range(len(lines)):
+                    user_pass = lines[i].split(b",")
+                    user_pass[0] = self.decrypt_string(user_pass[0])
+                    #matching username found
+                    if user_pass[0].rstrip() == self.current_user:
+                        #if the given password matches the old password let user create new password
+                        user_pass[1] = self.decrypt_string(user_pass[1])
+                        if user_pass[1].rstrip() == self.tokens[1]:
+                            #Request a new password
+                            new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
+                            #Request user to input password again
+                            pw_confirmation = input("Reenter the same password: ")
+                            #if the passwords do not match, return without adding password
+                            if new_password != pw_confirmation:
+                                print("Passwords do not match")
                                 login_info.close()
                                 self.add_to_audit_log("FPC")
                                 return
-        return
+                            #maxsize of password => 24 characters, upercase or lowercase letters and numbers
+                            #Check if password contains only uppercase, only lowercase, or only numbers
+                            if not re.fullmatch(r"([a-zA-Z0-9]){1,24}", new_password):
+                                print("Password contains illegal characters")
+                                login_info.close()
+                                self.add_to_audit_log("FPC")
+                                return
+                            #Check if the password is too basic or easy to guess
+                            common_password_file = open("common_passwords.txt", "r")
+                            common_passwords = common_password_file.readlines()
+                            common_password_file.close()
+                            if (len(new_password) < 8) or (new_password + '\n' in common_passwords) or (new_password == self.current_user):
+                                print("Password is too easy to guess")
+                                login_info.close()
+                                self.add_to_audit_log("FPC")
+                                return
+
+                            #If the passwords do match, add it to the login info
+                            login_info.close()
+                            new_password = self.encrypt_string(new_password)
+                            user_pass[0] = self.encrypt_string(self.current_user)
+                            lines[i] = user_pass[0] + b"," + new_password + b"\n"
+                            login_info = open("logininfo.txt", "wb")
+                            login_info.writelines(lines)
+                            login_info.close()
+                            print("OK")
+                            self.login_state = 1
+                            self.add_to_audit_log("SPC")
+                            return
+                        #if given password does not match old password, do not allow change password
+                        else:
+                            print("Invalid credentials")
+                            login_info.close()
+                            self.add_to_audit_log("FPC")
+                            return
 
     def list_users(self):
         """
@@ -404,18 +406,18 @@ class Address_Book:
             #Good record format: Bob;Smith;Robert;bobsmith@mail.edu;;8805551212;;;;;;;
             #recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
             tokens = line.split(";")
-            if not(re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[0]) or re.fullmatch("",tokens[0])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[1]) or re.fullmatch("",tokens[1])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[2]) or re.fullmatch("",tokens[2])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[3]) or re.fullmatch("",tokens[3])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[4]) or re.fullmatch("",tokens[4])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[5]) or re.fullmatch("",tokens[5])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[6]) or re.fullmatch("",tokens[6])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[7]) or re.fullmatch("",tokens[7])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[8]) or re.fullmatch("",tokens[8])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[9]) or re.fullmatch("",tokens[9])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[10]) or re.fullmatch("",tokens[10])) or not(
-            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[11]) or  re.fullmatch("",tokens[11])):
+            if not(re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[0]) or re.fullmatch("", tokens[0])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[1]) or re.fullmatch("", tokens[1])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[2]) or re.fullmatch("", tokens[2])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[3]) or re.fullmatch("", tokens[3])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[4]) or re.fullmatch("", tokens[4])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[5]) or re.fullmatch("", tokens[5])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[6]) or re.fullmatch("", tokens[6])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[7]) or re.fullmatch("", tokens[7])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[8]) or re.fullmatch("", tokens[8])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[9]) or re.fullmatch("", tokens[9])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[10]) or re.fullmatch("", tokens[10])) or not(
+                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[11]) or  re.fullmatch("", tokens[11])):
                 print("Input_file invalid format")
                 return
 
