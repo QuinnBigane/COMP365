@@ -9,6 +9,8 @@ Description: This is a secure implementation of an Address Book database
 import datetime 
 import re
 import os
+from cryptography.fernet import Fernet
+
 
 class Address_record:
     def __init__(self, recordID, SN='', GN='', PEM='', WEM='', PPH='', WPH='', SA='', CITY='', STP='', CTY='', PC=''):
@@ -28,11 +30,20 @@ class Address_record:
 class Address_Book:
     def __init__(self, login_state = 0,current_user = None):
         try:
-            open("logininfo.txt", "r")
-        except OSError: #if file cannot be opened
-            login_info = open("logininfo.txt", "w")
-            login_info.write("admin")
+            login_info = open("logininfo.txt", "r")
             login_info.close()
+        except OSError: #if file cannot be opened
+            login_info = open("logininfo.txt", "wb")
+            admin = self.encrypt_string("admin")
+            login_info.write(admin)
+            login_info.close()
+
+        try:
+            audit_log = open("audit_log.csv", "r")
+            audit_log.close()
+        except OSError: #if file cannot be opened
+            audit_log = open("audit_log.csv", "wb")
+            audit_log.close()
         #0 = not logged in
         #1 = logged in
         self.login_state = login_state
@@ -121,11 +132,12 @@ class Address_Book:
             print("Invalid Credentials")
         #check password
         else:
-            login_info = open("logininfo.txt", "r")
+            login_info = open("logininfo.txt", "rb")
             #loop through all login data
             lines = login_info.readlines()
             for i in range(len(lines)):
-                user_pass = lines[i].split(",")
+                user_pass = lines[i].split(b",")
+                user_pass[0] = self.decrypt_string(user_pass[0])
                 #matching username found
                 if user_pass[0].rstrip() == self.tokens[1]:
                     #no password associated with username
@@ -156,10 +168,11 @@ class Address_Book:
                             login_info.close()
                             self.add_to_audit_log("LF")
                             return
-                        #If the passwords do match, add it to the login info and login user
-                        lines[i] = lines[i].rstrip() + "," + new_password + "\n"
+                        #If the passwords do match, encrypt it and add it to the login info and login user
+                        new_password = self.encrypt_string(new_password)
+                        lines[i] = lines[i].rstrip() + b"," + new_password + b"\n"
                         login_info.close()
-                        login_info = open("logininfo.txt", "w")
+                        login_info = open("logininfo.txt", "wb")
                         login_info.writelines(lines)
                         login_info.close()
                         print("OK")
@@ -171,6 +184,7 @@ class Address_Book:
                     #username has a password associated with it
                     else:
                         password_guess = input("Enter your password: ")
+                        user_pass[1] = self.decrypt_string(user_pass[1])
                         if user_pass[1].rstrip() == password_guess: #correct password entered
                             #set current user variables
                             self.current_user = user_pass[0]
@@ -194,8 +208,6 @@ class Address_Book:
         """
         Logs out current user
         """
-        #TODO:What should we do if the user miss enters LOU
-
         #User enters more than just LOU
         # if len(self.tokens) > 1:
         #     print("Too many command parameters")
@@ -211,7 +223,7 @@ class Address_Book:
             self.current_user = None
             print("OK")
         return
- 
+    
     def change_password(self):
         """
         Logs out current user
@@ -227,14 +239,16 @@ class Address_Book:
                 self.add_to_audit_log("FPC")
             #check password         
             else:
-                login_info = open("logininfo.txt", "r")
+                login_info = open("logininfo.txt", "rb")
                 #loop through all login data
                 lines = login_info.readlines()
                 for i in range(len(lines)):
-                        user_pass = lines[i].split(",")
+                        user_pass = lines[i].split(b",")
+                        user_pass[0] = self.decrypt_string(user_pass[0])
                         #matching username found
                         if user_pass[0].rstrip() == self.current_user:
                             #if the given password matches the old password let user create new password
+                            user_pass[1] = self.decrypt_string(user_pass[1])
                             if user_pass[1].rstrip() == self.tokens[1]:
                                 #Request a new password
                                 new_password = input("Create a new password. Passwords may contain up to 24 upper- or lower-case letters or numbers. Choose an uncommon password that would be difficult to guess.\n")
@@ -257,21 +271,21 @@ class Address_Book:
                                 common_password_file = open("common_passwords.txt", "r")
                                 common_passwords = common_password_file.readlines()
                                 common_password_file.close()
-                                if len(new_password) < 8 or (new_password + '\n' in common_passwords)or (new_password == self.current_user):
+                                if len(new_password) < 8 or (new_password + '\n' in common_passwords) or (new_password == self.current_user):
                                     print("Password is too easy to guess")
                                     login_info.close()
                                     self.add_to_audit_log("FPC")
                                     return
 
                                 #If the passwords do match, add it to the login info
-                           
-                                lines[i] = self.current_user + "," + new_password + "\n"
                                 login_info.close()
-                                login_info = open("logininfo.txt", "w")
+                                new_password = self.encrypt_string(new_password)
+                                user_pass[0] = self.encrypt_string(self.current_user)
+                                lines[i] = user_pass[0] + b"," + new_password + b"\n"
+                                login_info = open("logininfo.txt", "wb")
                                 login_info.writelines(lines)
                                 login_info.close()
                                 print("OK")
-                                self.current_user = user_pass[0]
                                 self.login_state = 1
                                 self.add_to_audit_log("SPC")
                                 return
@@ -282,7 +296,7 @@ class Address_Book:
                                 self.add_to_audit_log("FPC")
                                 return
         return
-        
+
     def list_users(self):
         """
         Display Users
@@ -295,11 +309,11 @@ class Address_Book:
             print("Admin not active")
         #if the admin is logged in
         else:
-            infile = open("logininfo.txt", "r")
+            infile = open("logininfo.txt", "rb")
             lines = infile.readlines()
             for i in range(len(lines)):
-                toks = lines[i].split(",")
-                #if a matching username is found
+                toks = lines[i].split(b",")
+                toks[0] = self.decrypt_string(toks[0])
                 print(toks[0].rstrip())
             infile.close()
             print("Ok")
@@ -398,6 +412,7 @@ class Address_Book:
             return
             
         #check file format (Data fields may be no more than 64 printable ASCII characters in length)
+        new_records = 0
         for line in infile:
             #Good record format: Bob;Smith;Robert;bobsmith@mail.edu;;8805551212;;;;;;;
             #recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
@@ -412,16 +427,8 @@ class Address_Book:
             if self.check_recordID(recordID) == 1:
                 print("Duplicate recordID")
                 return
-
-
-        infile.close()
-        infile = open(self.tokens[1], "r")
-
-        #count number of records that are attempting to be inputted
-        new_records = 0
-        for line in infile:
-            new_records += 1    
-        
+            new_records+=1
+           
         #count the # of records in the user's database already and store in num_records_in_db (maybe a self. variable?)
         num_records_in_db = self.count_records()
         if num_records_in_db + new_records > 256:
@@ -430,24 +437,21 @@ class Address_Book:
 
         infile.close()
         infile = open(self.tokens[1], "r")
-
         #add each record to the user's database
         for line in infile:
-            line.rstrip()
-            self.tokens = line.split(";")
-            self.add_record_from_import()   
-
+            self.add_record_from_import(line.rstrip())
+   
         infile.close()
         print("OK")
         return
-        
+       
     def count_records(self):
         """
         Returns the number of records stored in a user's database.
         """
 
         try:
-            infile = open((self.current_user + ".txt"), "r")
+            infile = open((self.current_user + ".txt"), "rb")
 
             num_records = 0
             for _ in infile:
@@ -466,9 +470,10 @@ class Address_Book:
         #loop through all lines of user text file and checks to see if recordID is 
         # the same as any of the ones in the text file 
         try:
-            f = open((self.current_user + ".txt"), "r")
+            f = open((self.current_user + ".txt"), "rb")
             for line in f:
-                tokens = line.split(";")
+                tokens = line.split(b";")
+                tokens[0] = self.decrypt_string(tokens[0])
                 if (recordID == tokens[0]):
                     f.close() 
                     return 1
@@ -496,11 +501,15 @@ class Address_Book:
             print("Can’t open Output_file")
             return
         
-        infile = open((self.current_user + ".txt"), 'r')
+        infile = open((self.current_user + ".txt"), 'rb')
         
         try:
             for line in infile:
-                outfile.write(line)
+                tokens = line.split(b";")
+                output_line = ""
+                for tok in tokens:
+                    output_line += self.decrypt_string(tok) + ";"
+                outfile.write(output_line + "\n")
         except Exception: #error writing to file
             print("Error writing Output_file")
         
@@ -631,69 +640,48 @@ class Address_Book:
                     print("Number of records exceeds maximum") 
                     return
                 #newRecord is added to the user's personal database 
-                f = open((self.current_user + ".txt"), "a")#"a" for appending to textfile so not to erase data
-                f.write(newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
-                newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
-                newRecord.CTY+";"+newRecord.PC+"\n")
+                f = open((self.current_user + ".txt"), "ab")#"a" for appending to textfile so not to erase data
+                f.write(self.encrypt_string(newRecord.recordID)+b";"+
+                self.encrypt_string(newRecord.SN)+b";"+
+                self.encrypt_string(newRecord.GN)+b";"+
+                self.encrypt_string(newRecord.PEM)+b";"+
+                self.encrypt_string(newRecord.WEM)+b";"+
+                self.encrypt_string(newRecord.PPH)+b";"+
+                self.encrypt_string(newRecord.WPH)+b";"+
+                self.encrypt_string(newRecord.SA)+b";"+
+                self.encrypt_string(newRecord.CITY)+b";"+
+                self.encrypt_string(newRecord.STP)+b";"+
+                self.encrypt_string(newRecord.CTY)+b";"+
+                self.encrypt_string(newRecord.PC)+
+                b"\n")
                 f.close()
                 print("OK")
                 return
 
         print("Duplicate recordID")
         return
-    #TODO
-    def add_record_from_import(self):
+
+    def add_record_from_import(self, string):
         """
         Adds a new record for user
-        """ 
-        #if there is currently an active login
-        if self.login_state == 0: 
-            print("No active login session")
-            return
-        #if current user is an admin
-        elif self.current_user == "admin":
-            print("Admin active")
-            return
-        #if the record is not in the database
-        elif (self.check_recordID(self.tokens[0]) == 0):
-            #check if any entry exceeds the maximum length
-            for entry in self.tokens[0:]:
-                if (len(entry) > 64):
-                    print("One or more invalid record data fields")
-                    return
-            #check if the user has exceeded the maximum number of records
-            if (self.count_records() > 255):
-                print("Number of records exceeds maximum")
-                return
-            #check if user has entered a valid record ID
-            if (len(self.tokens[0])>16):
-                print("Invalid recordID")
-                return                 
-                
-            newRecord = Address_record(self.tokens[0])
-    
-            newRecord.SN = self.tokens[1]     
-            newRecord.GN = self.tokens[2] 
-            newRecord.PEM = self.tokens[3]                   
-            newRecord.WEM = self.tokens[4]                    
-            newRecord.PPH = self.tokens[5]    
-            newRecord.WPH = self.tokens[6]
-            newRecord.SA = self.tokens[7]
-            newRecord.CITY = self.tokens[8]
-            newRecord.STP = self.tokens[9]
-            newRecord.CTY = self.tokens[10]
-            newRecord.PC = self.tokens[11].rstrip()
-                        
-            #newRecord is added to the user's personal database 
-            f = open((self.current_user.rstrip() + ".txt"), "a")#"a" for appending to textfile so not to erase data
-            f.write(newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
-            newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
-            newRecord.CTY+";"+newRecord.PC+"\n")
-            f.close()
-                
-        else: 
-            print("Duplicate recordID")
-            return
+        """       
+        f = open((self.current_user + ".txt"), "ab")#"a" for appending to textfile so not to erase data   
+        toks = string.split(';')   
+        for i in range(len(toks)):
+            toks[i] = self.encrypt_string(toks[i])
+        f.write(toks[0]+b";"+
+        toks[1]+b";"+
+        toks[2]+b";"+
+        toks[3]+b";"+
+        toks[4]+b";"+
+        toks[5]+b";"+
+        toks[6]+b";"+
+        toks[7]+b";"+
+        toks[8]+b";"+
+        toks[9]+b";"+
+        toks[10]+b";"+
+        toks[11]+b"\n")
+        f.close()
     
     def delete_record(self):
         """
@@ -722,17 +710,17 @@ class Address_Book:
         #If the record ID is found
         else:
             #delete it
-            f = open((self.current_user + ".txt"), "r")
+            f = open((self.current_user + ".txt"), "rb")
             lines = f.readlines()
             for i in range(len(lines)):
-                tokens = lines[i].split(";")
+                tokens = lines[i].split(b";")
+                tokens[0] = self.decrypt_string(tokens[0])
                 if (tokens[0] == self.tokens[1]):
-                    lines[i] = ""
+                    lines[i] = b""
                     f.close()
-                    outFile = open((self.current_user + ".txt"), "w")
+                    outFile = open((self.current_user + ".txt"), "wb")
                     outFile.writelines(lines)
                     outFile.close()
-                
             print("OK") 
             return   
 
@@ -765,15 +753,14 @@ class Address_Book:
             print("RecordID not found")
             return
         #If the record ID was found edit it
-        f = open((self.current_user + ".txt"), "r")
+        f = open((self.current_user + ".txt"), "rb")
         #lines is arry of all lines in current_user.txt
         lines = f.readlines()
         #loops through all lines
-        #splits tokens in each line by ";"
-        #tokens[0] = recordID
         for i in range(len(lines)):
-            tokens = lines[i].split(";") 
+            tokens = lines[i].split(b";") 
             #if recordID from textfile is the same as the given recordID
+            tokens[0] = self.decrypt_string(tokens[0])
             if (tokens[0] == self.tokens[1]):
                 newRecord = Address_record(self.tokens[1])
                 #clean the input commands
@@ -801,24 +788,22 @@ class Address_Book:
                             return
                     elif(command =="PEM"):
                         PEM = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", PEM) or re.fullmatch("", PEM):
+                        if (re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", PEM) and len(PEM) < 65 ) or re.fullmatch("", PEM):
                             newRecord.PEM = PEM
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="WEM"):
                         WEM = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", WEM) or re.fullmatch("", WEM):
+                        if (re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", WEM) and len(WEM) < 65 ) or re.fullmatch("", WEM):
                             newRecord.WEM = WEM
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command=="PPH"):
                         PPH = entry[entry.index("=")+2:]
-                        print(PPH)
                         if re.fullmatch(r"\d{1,10}", PPH) or re.fullmatch("", PPH):
                             newRecord.PPH = PPH
-                            print("entered")
                         else:
                             print("One or more invalid record data fields")
                             return
@@ -826,6 +811,9 @@ class Address_Book:
                         WPH = entry[entry.index("=")+2:]
                         if re.fullmatch(r"\d{1,10}", WPH) or re.fullmatch("", WPH):
                             newRecord.WPH = WPH
+                        else:
+                            print("One or more invalid record data fields")
+                            return
                     elif (command=="SA"):
                         SA = entry[entry.index("=")+2:]
                         if re.fullmatch(r"[ -~]{1,64}", SA) or re.fullmatch("", SA):
@@ -866,17 +854,26 @@ class Address_Book:
                         return
                         
                 
-            lines[i] = (newRecord.recordID+";"+newRecord.SN+";"+newRecord.GN+";"+newRecord.PEM+";"+newRecord.WEM+";"+
-                newRecord.PPH+";"+newRecord.WPH+";"+newRecord.SA+";"+newRecord.CITY+";"+newRecord.STP+";"+
-                newRecord.CTY+";"+newRecord.PC+"\n")
+                lines[i] = (self.encrypt_string(newRecord.recordID)+b";"+
+                self.encrypt_string(newRecord.SN)+b";"+
+                self.encrypt_string(newRecord.GN)+b";"+
+                self.encrypt_string(newRecord.PEM)+b";"+
+                self.encrypt_string(newRecord.WEM)+b";"+
+                self.encrypt_string(newRecord.PPH)+b";"+
+                self.encrypt_string(newRecord.WPH)+b";"+
+                self.encrypt_string(newRecord.SA)+b";"+
+                self.encrypt_string(newRecord.CITY)+b";"+
+                self.encrypt_string(newRecord.STP)+b";"+
+                self.encrypt_string(newRecord.CTY)+b";"+
+                self.encrypt_string(newRecord.PC)+b"\n")
                 
-            f.close()
-            outFile = open((self.current_user + ".txt"), "w")
-            outFile.writelines(lines)
-            outFile.close()
-                    
-            print("OK") 
-            return
+                f.close()
+                outFile = open((self.current_user + ".txt"), "wb")
+                outFile.writelines(lines)
+                outFile.close()
+                        
+                print("OK") 
+                return
                 
                 
         f.close()
@@ -907,27 +904,38 @@ class Address_Book:
         #print all elements 
         if (len(self.tokens)<=2):
             #Open the users file
-            f = open((self.current_user + ".txt"), "r")
+            f = open((self.current_user + ".txt"), "rb")
             lines = f.readlines()
             #loop through the data
             for i in range(len(lines)):
-                tokens = lines[i].split(";")
+                tokens = lines[i].split(b";")
+                tokens[0] = self.decrypt_string(tokens[0])
                 #when matching record ID found, print it
                 if (tokens[0] == self.tokens[1]):
-                    print(tokens[0] + " SN="+tokens[1] +" GN="+tokens[2] +" PEM="+tokens[3] +" WEM="+tokens[4] 
-                    +" PPH="+tokens[5] +" WPH="+tokens[6] +" SA="+tokens[7] +" CITY="+tokens[8] +" STP="+tokens[9]
-                    +" CTY="+tokens[10] +" PC="+tokens[11].rstrip())
+                    print(tokens[0] +
+                    " SN="+self.decrypt_string(tokens[1]) +
+                    " GN="+self.decrypt_string(tokens[2]) +
+                    " PEM="+self.decrypt_string(tokens[3]) +
+                    " WEM="+self.decrypt_string(tokens[4]) +
+                    " PPH="+self.decrypt_string(tokens[5]) +
+                    " WPH="+self.decrypt_string(tokens[6]) +
+                    " SA="+self.decrypt_string(tokens[7]) +
+                    " CITY="+self.decrypt_string(tokens[8]) +
+                    " STP="+self.decrypt_string(tokens[9]) +
+                    " CTY="+self.decrypt_string(tokens[10]) +
+                    " PC="+self.decrypt_string(tokens[11].rstrip()))
             f.close()
             print("OK")
             return
         #print specfic elements
         else:
             #open the users file
-            f = open((self.current_user + ".txt"), "r")
+            f = open((self.current_user + ".txt"), "rb")
             lines = f.readlines()
             #loop through the data
             for i in range(len(lines)):
-                tokens = lines[i].split(";")
+                tokens = lines[i].split(b";")
+                tokens[0] = self.decrypt_string(tokens[0])
                 #if matching record ID found
                 if (tokens[0] == self.tokens[1]):
                     outputValue=self.tokens[1] + " "
@@ -935,27 +943,27 @@ class Address_Book:
                     for i in range(2,len(self.tokens)):
                         #i and loop through all self.tokens
                         if (self.tokens[i] == "SN"): 
-                            outputValue += "SN="+ tokens[1]+" "
+                            outputValue += "SN="+ self.decrypt_string(tokens[1])+" "
                         elif self.tokens[i] == "GN":
-                            outputValue += "GN="+ tokens[2]+" "
+                            outputValue += "GN="+ self.decrypt_string(tokens[2])+" "
                         elif self.tokens[i] == "PEM":
-                            outputValue += "PEM="+ tokens[3]+" "
+                            outputValue += "PEM="+ self.decrypt_string(tokens[3])+" "
                         elif self.tokens[i] == "WEM":
-                            outputValue += "WEM="+ tokens[4]+" "
+                            outputValue += "WEM="+ self.decrypt_string(tokens[4])+" "
                         elif self.tokens[i] == "PPH":
-                            outputValue += "PPH="+ tokens[5]+" "
+                            outputValue += "PPH="+ self.decrypt_string(tokens[5])+" "
                         elif self.tokens[i] == "WPH":
-                            outputValue += "WPH="+ tokens[6]+" "
+                            outputValue += "WPH="+ self.decrypt_string(tokens[6])+" "
                         elif self.tokens[i] == "SA":
-                            outputValue += "SA="+ tokens[7]+" "
+                            outputValue += "SA="+ self.decrypt_string(tokens[7])+" "
                         elif self.tokens[i] == "CITY":
-                            outputValue += "CITY="+ tokens[8]+" "
+                            outputValue += "CITY="+ self.decrypt_string(tokens[8])+" "
                         elif self.tokens[i] == "STP":
-                            outputValue += "STP="+ tokens[9] +" "
+                            outputValue += "STP="+ self.decrypt_string(tokens[9]) +" "
                         elif self.tokens[i] == "CTY":
-                            outputValue += "CTY="+ tokens[10] +" "
+                            outputValue += "CTY="+ self.decrypt_string(tokens[10]) +" "
                         elif self.tokens[i] == "PC":
-                            outputValue += "PC="+ tokens[11].rstrip() +" "
+                            outputValue += "PC="+ self.decrypt_string(tokens[11].rstrip()) +" "
 
                         else:
                             #field invalid
@@ -966,7 +974,7 @@ class Address_Book:
             print("Ok")
             f.close()
             return
-    
+
     def display_audit_log(self):
         """
         Displays the audit log 
@@ -980,27 +988,31 @@ class Address_Book:
         #if user ID is provided
         elif len(self.tokens) > 1:
             #if valid user ID
-            login_info = open("logininfo.txt", "r")
+            login_info = open("logininfo.txt", "rb")
             lines = login_info.readlines()
             for i in range(len(lines)):
-                user_pass = lines[i].split(",")
+                user_pass = lines[i].split(b",")
+                user_pass[0] = self.decrypt_string(user_pass[0])
                 #if a matching username is found
                 if user_pass[0].rstrip() == self.tokens[1]:
                     #display audit log for that user
                     login_info.close()
-                    auditlog = open("audit_log.csv", "r")
+                    auditlog = open("audit_log.csv", "rb")
                     for line in auditlog:
+                        line = self.decrypt_string(line.rstrip())
                         audit_record = line.split(",")
                         if audit_record[3].rstrip() == self.tokens[1]:
-                            print(line.rstrip())
+                            print(audit_record[0] + "," +audit_record[1] + "," + audit_record[2] + "," + audit_record[3])
                     print("Ok")
                     return
             print("Invalid userID")
         #if the admin is logged in
         else:    
-            auditlog = open("audit_log.csv", "r")
+            auditlog = open("audit_log.csv", "rb")
             for line in auditlog:
-                print(line.rstrip())  
+                line = self.decrypt_string(line.rstrip())
+                audit_record = line.split(",")
+                print(audit_record[0] + "," + audit_record[1] + "," + audit_record[2] + "," + audit_record[3].rstrip()) 
         return
     
     def delete_user(self):
@@ -1023,15 +1035,16 @@ class Address_Book:
             if username == "admin" or not re.fullmatch(r"[A-Za-z0-9]{1,16}",username):
                 print("Invalid userID")
                 return
-            infile = open("logininfo.txt", "r")
+            infile = open("logininfo.txt", "rb")
             lines = infile.readlines()
             for i in range(len(lines)):
-                toks = lines[i].split(",")
+                toks = lines[i].split(b",")
+                toks[0] = self.decrypt_string(toks[0])
                 #if a matching username is found
                 if toks[0].rstrip() == username:
                     #delete it from login info
-                    lines[i] = ""
-                    infile = open("logininfo.txt", "w")
+                    lines[i] = b""
+                    infile = open("logininfo.txt", "wb")
                     infile.writelines(lines)
                     infile.close()
                     #delte user data
@@ -1063,50 +1076,60 @@ class Address_Book:
             if username == "admin" or not re.fullmatch(r"[A-Za-z0-9]{1,16}",username):
                 print("Invalid userID")
                 return
-            infile = open("logininfo.txt", "r")
+            infile = open("logininfo.txt", "rb")
             lines = infile.readlines()
             if len(lines) > 7:
                 print("Invalid userID")
                 return
             for i in range(len(lines)):
-                toks = lines[i].split(",")
+                toks = lines[i].split(b",")
+                toks[0] = self.decrypt_string(toks[0])
                 #if a matching username is found
                 if toks[0].rstrip() == username:
                     #do not add it
                     infile.close()
                     print("Account already exists")
                     return
-            #if account does not exist
-            infile = open("logininfo.txt", "a")
-            infile.write(username + "\n")
+            #if account does not exist encrypt and add it
+            username = self.encrypt_string(username)
+            infile = open("logininfo.txt", "ab")
+            infile.write(username + b"\n")
             infile.close()
             self.add_to_audit_log("AU")
             print("Ok")
 
     def add_to_audit_log(self, audit_type):
-        auditlog_r = open("audit_log.csv", "r")
+        auditlog_r = open("audit_log.csv", "rb")
         #If reached max length of audit log, delete first line
         lines = auditlog_r.readlines()
         if len(lines) > 511:
             auditlog_r.close()
-            auditlog_w = open("audit_log.csv", "w")
+            auditlog_w = open("audit_log.csv", "wb")
             auditlog_w.writelines(lines[1:])
             auditlog_w.close()
         e = datetime.datetime.now()
         #if there is currently no user
-        auditlog_a = open("audit_log.csv", "a")
+        auditlog_a = open("audit_log.csv", "ab")
         if self.current_user == None:
-            auditlog_a.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
-            str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
-            audit_type + "," + "\n")   
+            audit = str(e.day) +"-"+ str(e.month) +"-"+ str(e.year) + "," + str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," + audit_type + "," 
+            auditlog_a.write(self.encrypt_string(audit)+ b"\n")   
         #if there is a user
         else:
-            auditlog_a.write(str(e.day) +"-"+ str(e.month) +"-"+  str(e.year) + "," +
-                str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," +
-                audit_type + "," + str(self.current_user.rstrip()) + "\n")      
+            audit = str(e.day) +"-"+ str(e.month) +"-"+ str(e.year) + "," + str(e.hour) +":"+ str(e.minute) +":"+ str(e.second) + "," + audit_type + "," + str(self.current_user.rstrip())
+            auditlog_a.write(self.encrypt_string(audit) + b"\n")      
         auditlog_a.close()
 
-        
+    def encrypt_string(self, string):
+        key = b"fyVx1pfKNXcIFd-h6Qvo2zbTI3lVGoxQTsOJQFLWMPs="
+        f = Fernet(key)
+        encrypted = f.encrypt(string.encode())  # Encrypt the bytes. The returning object is of type bytes
+        return encrypted
+
+    def decrypt_string(self, string):
+        key = b"fyVx1pfKNXcIFd-h6Qvo2zbTI3lVGoxQTsOJQFLWMPs="
+        f = Fernet(key)
+        decrypted = f.decrypt(string).decode()
+        return decrypted        
 
 if __name__ == "__main__":
     Address_Book()

@@ -1,6 +1,0 @@
-admin,1
-A,1
-B
-C
-D,uniquepassword
-Thisistester
