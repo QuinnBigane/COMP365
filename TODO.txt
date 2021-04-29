@@ -1,11 +1,5 @@
 SECURITY IMPLEMENTATIONS
 
-DEATH
-    Encrypt the files.....
-
-
-Admin can not save audit data =>??
-
 make adding/editing records accept ' (as opposed to current ")
 
 IF you try to add record without quotes you can get around some stuff 

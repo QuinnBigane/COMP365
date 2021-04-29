@@ -271,7 +271,7 @@ class Address_Book:
                                 common_password_file = open("common_passwords.txt", "r")
                                 common_passwords = common_password_file.readlines()
                                 common_password_file.close()
-                                if len(new_password) < 8 or (new_password + '\n' in common_passwords) or (new_password == self.current_user):
+                                if (len(new_password) < 8) or (new_password + '\n' in common_passwords) or (new_password == self.current_user):
                                     print("Password is too easy to guess")
                                     login_info.close()
                                     self.add_to_audit_log("FPC")
@@ -416,15 +416,24 @@ class Address_Book:
         for line in infile:
             #Good record format: Bob;Smith;Robert;bobsmith@mail.edu;;8805551212;;;;;;;
             #recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
-            good_format = re.match(r"[ -~]{1,64}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';([ -~]+@[ -~]+\.[ -~]+){1}|'';([ -~]+@[ -~]+\.[ -~]+){1}|'';\d{1,10}|'';\d{1,10}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';[ -~]{1,64}|'';\d{5}|''", line)
-            if not good_format:
+            tokens = line.split(";")
+            if not(re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[0]) or re.fullmatch("",tokens[0])) or not( 
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[1]) or re.fullmatch("",tokens[1])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[2]) or re.fullmatch("",tokens[2])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[3]) or re.fullmatch("",tokens[3])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[4]) or re.fullmatch("",tokens[4])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[5]) or re.fullmatch("",tokens[5])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[6]) or re.fullmatch("",tokens[6])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[7]) or re.fullmatch("",tokens[7])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[8]) or re.fullmatch("",tokens[8])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[9]) or re.fullmatch("",tokens[9])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[10]) or re.fullmatch("",tokens[10])) or not(
+            re.fullmatch(r"[\x00-\x7F]{1,64}",tokens[11]) or  re.fullmatch("",tokens[11])):
                 print("Input_file invalid format")
                 return
-            
-            toks = line.split(";")
-            recordID = toks[0]
+           
 
-            if self.check_recordID(recordID) == 1:
+            if self.check_recordID(tokens[0]) == 1:
                 print("Duplicate recordID")
                 return
             new_records+=1
@@ -557,28 +566,28 @@ class Address_Book:
                     command = entry[0:entry.index("=")] #the command which will be entered
                     if (command == "SN"):
                         SN = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", SN) or re.fullmatch("", SN):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", SN) or re.fullmatch("", SN):
                             newRecord.SN = SN
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command == "GN"):
                         GN = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", GN) or re.fullmatch("", GN):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", GN) or re.fullmatch("", GN):
                             newRecord.GN = GN
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command =="PEM"):
                         PEM = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", PEM) or re.fullmatch("", PEM):
+                        if (re.fullmatch(r"([\x00-\x7F]+@[\x00-\x7F]+\.[\x00-\x7F]+){1}", PEM) and len(PEM) < 65 ) or re.fullmatch("", PEM):
                             newRecord.PEM = PEM
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="WEM"):
                         WEM = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", WEM) or re.fullmatch("", WEM):
+                        if (re.fullmatch(r"([\x00-\x7F]+@[\x00-\x7F]+\.[\x00-\x7F]+){1}", WEM) and len(PEM) < 65 ) or re.fullmatch("", WEM):
                             newRecord.WEM = WEM
                         else:
                             print("One or more invalid record data fields")
@@ -598,28 +607,28 @@ class Address_Book:
                             newRecord.WPH = WPH
                     elif (command=="SA"):
                         SA = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", SA) or re.fullmatch("", SA):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", SA) or re.fullmatch("", SA):
                             newRecord.SA = SA
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command=="CITY"):
                         CITY = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", CITY) or re.fullmatch("", CITY):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", CITY) or re.fullmatch("", CITY):
                             newRecord.CITY = CITY
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command=="STP"):
                         STP = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", STP) or re.fullmatch("", STP):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", STP) or re.fullmatch("", STP):
                             newRecord.STP = STP
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="CTY"):
                         CTY = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", CTY) or re.fullmatch("", CTY):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", CTY) or re.fullmatch("", CTY):
                             newRecord.CTY = CTY
                         else:
                             print("One or more invalid record data fields")
@@ -774,28 +783,28 @@ class Address_Book:
                     command = entry[0:entry.index("=")] #the command which will be entered
                     if (command == "SN"):
                         SN = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", SN) or re.fullmatch("", SN):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", SN) or re.fullmatch("", SN):
                             newRecord.SN = SN
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command == "GN"):
                         GN = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", GN) or re.fullmatch("", GN):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", GN) or re.fullmatch("", GN):
                             newRecord.GN = GN
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif(command =="PEM"):
                         PEM = entry[entry.index("=")+2:]
-                        if (re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", PEM) and len(PEM) < 65 ) or re.fullmatch("", PEM):
+                        if (re.fullmatch(r"([\x00-\x7F]+@[\x00-\x7F]+\.[\x00-\x7F]+){1}", PEM) and len(PEM) < 65 ) or re.fullmatch("", PEM):
                             newRecord.PEM = PEM
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="WEM"):
                         WEM = entry[entry.index("=")+2:]
-                        if (re.fullmatch(r"([ -~]+@[ -~]+\.[ -~]+){1}", WEM) and len(WEM) < 65 ) or re.fullmatch("", WEM):
+                        if (re.fullmatch(r"([\x00-\x7F]+@[\x00-\x7F]+\.[\x00-\x7F]+){1}", WEM) and len(WEM) < 65 ) or re.fullmatch("", WEM):
                             newRecord.WEM = WEM
                         else:
                             print("One or more invalid record data fields")
@@ -816,28 +825,28 @@ class Address_Book:
                             return
                     elif (command=="SA"):
                         SA = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", SA) or re.fullmatch("", SA):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", SA) or re.fullmatch("", SA):
                             newRecord.SA = SA
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command=="CITY"):
                         CITY = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", CITY) or re.fullmatch("", CITY):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", CITY) or re.fullmatch("", CITY):
                             newRecord.CITY = CITY
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command=="STP"):
                         STP = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", STP) or re.fullmatch("", STP):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", STP) or re.fullmatch("", STP):
                             newRecord.STP = STP
                         else:
                             print("One or more invalid record data fields")
                             return
                     elif (command =="CTY"):
                         CTY = entry[entry.index("=")+2:]
-                        if re.fullmatch(r"[ -~]{1,64}", CTY) or re.fullmatch("", CTY):
+                        if re.fullmatch(r"[\x00-\x7F]{1,64}", CTY) or re.fullmatch("", CTY):
                             newRecord.CTY = CTY
                         else:
                             print("One or more invalid record data fields")
@@ -987,6 +996,9 @@ class Address_Book:
             print("Admin not active")
         #if user ID is provided
         elif len(self.tokens) > 1:
+            if self.tokens[1] == "admin" or not re.fullmatch(r"[A-Za-z0-9]{1,16}",self.tokens[1]):
+                print("Invalid userID")
+                return
             #if valid user ID
             login_info = open("logininfo.txt", "rb")
             lines = login_info.readlines()
@@ -1005,7 +1017,7 @@ class Address_Book:
                             print(audit_record[0] + "," +audit_record[1] + "," + audit_record[2] + "," + audit_record[3])
                     print("Ok")
                     return
-            print("Invalid userID")
+            print("Account does not exist")
         #if the admin is logged in
         else:    
             auditlog = open("audit_log.csv", "rb")
