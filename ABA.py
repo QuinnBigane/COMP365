@@ -409,15 +409,15 @@ class Address_Book:
             if not(re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[0]) or re.fullmatch("", tokens[0])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[1]) or re.fullmatch("", tokens[1])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[2]) or re.fullmatch("", tokens[2])) or not(
-                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[3]) or re.fullmatch("", tokens[3])) or not(
-                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[4]) or re.fullmatch("", tokens[4])) or not(
+                re.fullmatch(r"([\x00-\x7F]+@[\x00-\x7F]+\.[\x00-\x7F]+){1}", tokens[3]) or re.fullmatch("", tokens[3])) or not(
+                re.fullmatch(r"([\x00-\x7F]+@[\x00-\x7F]+\.[\x00-\x7F]+){1}", tokens[4]) or re.fullmatch("", tokens[4])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[5]) or re.fullmatch("", tokens[5])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[6]) or re.fullmatch("", tokens[6])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[7]) or re.fullmatch("", tokens[7])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[8]) or re.fullmatch("", tokens[8])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[9]) or re.fullmatch("", tokens[9])) or not(
                 re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[10]) or re.fullmatch("", tokens[10])) or not(
-                re.fullmatch(r"[\x00-\x7F]{1,64}", tokens[11]) or  re.fullmatch("", tokens[11])):
+                re.fullmatch(r"[\d]{5}", tokens[11]) or  re.fullmatch("", tokens[11])):
                 print("Input_file invalid format")
                 return
 
