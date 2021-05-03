@@ -13,8 +13,7 @@ from cryptography.fernet import Fernet
 
 
 class Address_record:
-    def __init__(self, recordID,
-    SN='', GN='', PEM='', WEM='', PPH='', WPH='', SA='', CITY='', STP='', CTY='', PC=''):
+    def __init__(self, recordID, SN='', GN='', PEM='', WEM='', PPH='', WPH='', SA='', CITY='', STP='', CTY='', PC=''):
         self.recordID = recordID
         self.SN = SN
         self.GN = GN
@@ -62,7 +61,10 @@ class Address_Book:
         #main loop waiting for user input
         while 1:
             #prompt user to enter a command
-            command = input("ABA > ")
+            try:
+                command = input("ABA > ")
+            except EOFError:
+                return
             #interpret user command
             self.command_line_interpreter(command)
 
