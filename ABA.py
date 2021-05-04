@@ -537,6 +537,9 @@ class Address_Book:
             return
         #if the record ID is not in the user database
         if self.check_recordID(self.tokens[1]) == 0:
+            if len(self.tokens) < 3:
+                print("One or more invalid record data fields")
+                return
             newRecord = Address_record(self.tokens[1])
             #clean the input commands
             self.tokens = " ".join(self.tokens[2:])
